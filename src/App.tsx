@@ -64,6 +64,9 @@ function App() {
             <p className="mt-1 text-sm text-slate-500">日々のお金の流れを、迷わず把握する。</p>
           </div>
           <div className="flex items-center gap-3">
+            <a className="hub-button" href="https://personal-dashboard-7md.pages.dev/">
+              ← Hub
+            </a>
             {!loading && !error && (
               <div className="hidden text-right text-xs text-slate-500 sm:block">
                 <p>{demoMode ? 'デモデータ' : `${expenses.length.toLocaleString('ja-JP')}件`} · {categories.length}カテゴリ</p>

@@ -4,7 +4,7 @@ Supabaseの `budget_categories` / `expenses` テーブルを使った、自分�
 ナレッジDB Webアプリと同様に、ブラウザはSupabaseへ直接接続しません。
 
 ```text
-Browser --Basic認証--> Cloudflare Pages Functions --Secret key--> Supabase REST API
+Browser --Basic認証 / Cloudflare Access--> Cloudflare Pages Functions --Secret key--> Supabase REST API
 ```
 
 ## セットアップ
@@ -30,8 +30,14 @@ npm run dev
 
 | 変数 | 必須 | 説明 |
 | --- | --- | --- |
-| `DASHBOARD_PASSWORD` | 必須 | 閲覧用パスワード（ASCIIのみ） |
+| `DASHBOARD_PASSWORD` | Basic時 | 閲覧用パスワード（ASCIIのみ） |
 | `DASHBOARD_USER` | 任意 | 閲覧用ユーザー名。既定は `admin` |
+| `AUTH_MODE` | 任意 | `basic`（既定）または `access` |
+| `TEAM_DOMAIN` | Access時 | `https://<team>.cloudflareaccess.com` |
+| `POLICY_AUD` | Access時 | Access Application Audience tag |
+| `HUB_SERVICE_TOKEN` | Hub連携時 | Hubから家計簿GET APIだけを許可する共有secret |
+| `SSO_SHARED_SECRET` | Hub連携時 | Hubからの署名付き認証引き継ぎを検証する共有secret |
+| `SESSION_TTL_DAYS` | 任意 | 引き継いだセッションの日数。既定30 |
 | `SUPABASE_URL` | 必須 | `knowledge-db` のプロジェクトURL |
 | `SUPABASE_SECRET_KEY` | 必須 | Cloudflare Functionsだけが使う `sb_secret_...` キー |
 
@@ -81,9 +87,14 @@ POSTなどの書き込みメソッドは受け付けません。
 
 ## セキュリティ構成
 
-`functions/_middleware.ts` が静的ファイルとAPIを含むサイト全体をBasic認証で保護します。
+`functions/_middleware.ts` が静的ファイルとAPIを含むサイト全体をBasic認証またはCloudflare Accessで保護します。
 `DASHBOARD_PASSWORD` が未設定の場合は503で閉じ、認証後もキャッシュ、外部スクリプト、
 iframe埋め込み、検索エンジン登録を禁止します。
+
+`AUTH_MODE=access` では `Cf-Access-Jwt-Assertion` の署名・issuer・audienceを検証します。
+Personal Hubと他のダッシュボードを同じAccess applicationに登録すると、1回のログインで移動できます。
+
+`AUTH_MODE=basic` では、Personal Hubと同じ `SSO_SHARED_SECRET` を設定すると署名付き引き継ぎを受け付け、対象ホストに固定したHttpOnlyセッションを作成します。`HUB_SERVICE_TOKEN` は `GET /api/expenses` のみに使え、他のAPIやメソッドはBasic認証を要求します。
 
 FunctionsだけがSupabase Secret keyを保持し、ブラウザへは必要な列だけを返します。
 受信データも画面側で型・必須値・ページ情報を検証します。
