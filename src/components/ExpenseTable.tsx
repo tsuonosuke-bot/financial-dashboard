@@ -9,7 +9,6 @@ type Props = {
 
 export function ExpenseTable({ expenses, selectedMonth }: Props) {
   const pageSize = 50
-  const [payerFilter, setPayerFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [query, setQuery] = useState('')
@@ -20,13 +19,7 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
     [expenses, selectedMonth],
   )
 
-  const payers = useMemo(
-    () => Array.from(new Set(monthExpenses.map((item) => item.payer).filter((payer): payer is string => Boolean(payer)))).sort(),
-    [monthExpenses],
-  )
-
   const filtered = useMemo(() => monthExpenses.filter((expense) => {
-    if (payerFilter && expense.payer !== payerFilter) return false
     if (dateFrom && expense.transaction_date < dateFrom) return false
     if (dateTo && expense.transaction_date > dateTo) return false
     if (query) {
@@ -34,7 +27,7 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
       if (!haystack.includes(query.toLocaleLowerCase('ja'))) return false
     }
     return true
-  }), [monthExpenses, payerFilter, dateFrom, dateTo, query])
+  }), [monthExpenses, dateFrom, dateTo, query])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, pageCount)
@@ -49,7 +42,6 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
   }
 
   const clearFilters = () => {
-    setPayerFilter('')
     setDateFrom('')
     setDateTo('')
     setQuery('')
@@ -71,7 +63,7 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <input
           type="search"
           className="filter-control xl:col-span-2"
@@ -79,10 +71,6 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
           value={query}
           onChange={(event) => updateFilter(setQuery, event.target.value)}
         />
-        <select className="filter-control" value={payerFilter} onChange={(event) => updateFilter(setPayerFilter, event.target.value)}>
-          <option value="">支払者: すべて</option>
-          {payers.map((payer) => <option key={payer} value={payer}>{payer}</option>)}
-        </select>
         <input type="date" aria-label="開始日" className="filter-control" value={dateFrom} onChange={(event) => updateFilter(setDateFrom, event.target.value)} />
         <input type="date" aria-label="終了日" className="filter-control" value={dateTo} onChange={(event) => updateFilter(setDateTo, event.target.value)} />
         <button type="button" className="filter-reset" onClick={clearFilters}>明細条件をクリア</button>

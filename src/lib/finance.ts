@@ -48,3 +48,8 @@ export function filterExpensesByCategory(expenses: Expense[], category: string) 
   if (!category) return expenses
   return expenses.filter((expense) => expense.category === category)
 }
+
+export function filterExpensesByPayer(expenses: Expense[], payer: string) {
+  if (!payer) return expenses
+  return expenses.filter((expense) => expense.payer === payer)
+}

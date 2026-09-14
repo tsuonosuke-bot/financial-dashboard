@@ -2,7 +2,14 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { ExpenseTable } from './components/ExpenseTable'
 import { SummaryCards } from './components/SummaryCards'
 import { useExpenses } from './hooks/useExpenses'
-import { categoryLabel, currentMonthKey, filterExpensesByCategory, monthKey, monthLabel } from './lib/finance'
+import {
+  categoryLabel,
+  currentMonthKey,
+  filterExpensesByCategory,
+  filterExpensesByPayer,
+  monthKey,
+  monthLabel,
+} from './lib/finance'
 
 const MonthlyTrendChart = lazy(() => import('./components/MonthlyTrendChart').then((module) => ({ default: module.MonthlyTrendChart })))
 const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then((module) => ({ default: module.CategoryPieChart })))
@@ -11,6 +18,7 @@ function App() {
   const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode } = useExpenses()
   const [requestedMonth, setRequestedMonth] = useState(currentMonthKey())
   const [requestedCategory, setRequestedCategory] = useState('')
+  const [requestedPayer, setRequestedPayer] = useState('')
   const availableMonths = useMemo(
     () => Array.from(new Set(expenses.map((expense) => monthKey(expense.transaction_date)))).sort().reverse(),
     [expenses],
@@ -22,13 +30,23 @@ function App() {
     ])).sort(),
     [categories, expenses],
   )
+  const availablePayers = useMemo(
+    () => Array.from(new Set(
+      expenses.map((expense) => expense.payer).filter((payer): payer is string => Boolean(payer)),
+    )).sort((left, right) => left.localeCompare(right, 'ja')),
+    [expenses],
+  )
   const selectedMonth = availableMonths.includes(requestedMonth)
     ? requestedMonth
     : (availableMonths[0] ?? requestedMonth)
   const selectedCategory = availableCategories.includes(requestedCategory) ? requestedCategory : ''
+  const selectedPayer = availablePayers.includes(requestedPayer) ? requestedPayer : ''
   const filteredExpenses = useMemo(
-    () => filterExpensesByCategory(expenses, selectedCategory),
-    [expenses, selectedCategory],
+    () => filterExpensesByPayer(
+      filterExpensesByCategory(expenses, selectedCategory),
+      selectedPayer,
+    ),
+    [expenses, selectedCategory, selectedPayer],
   )
   const selectedMonthIndex = availableMonths.indexOf(selectedMonth)
   const newestTransaction = expenses.reduce(
@@ -92,7 +110,7 @@ function App() {
               <div>
                 <p className="eyebrow">Filters</p>
                 <p className="text-sm font-semibold text-slate-700">表示条件</p>
-                <p className="mt-1 text-xs text-slate-500">月とカテゴリを組み合わせて集計します</p>
+                <p className="mt-1 text-xs text-slate-500">月・カテゴリ・支払者を組み合わせて集計します</p>
               </div>
               <div className="flex w-full flex-col gap-3 sm:w-auto lg:flex-row lg:items-end">
                 <div>
@@ -140,12 +158,37 @@ function App() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="toolbar-label" htmlFor="payer-filter">支払者</label>
+                  <select
+                    id="payer-filter"
+                    className="category-select"
+                    value={selectedPayer}
+                    onChange={(event) => setRequestedPayer(event.target.value)}
+                  >
+                    <option value="">すべての支払者</option>
+                    {availablePayers.map((payer) => (
+                      <option key={payer} value={payer}>{payer}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </section>
-            {selectedCategory && (
+            {(selectedCategory || selectedPayer) && (
               <div className="active-filter" role="status">
-                <span>カテゴリ: {categoryLabel(selectedCategory)}</span>
-                <button type="button" onClick={() => setRequestedCategory('')}>解除</button>
+                <div className="flex flex-wrap gap-x-5 gap-y-1">
+                  {selectedCategory && <span>カテゴリ: {categoryLabel(selectedCategory)}</span>}
+                  {selectedPayer && <span>支払者: {selectedPayer}</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequestedCategory('')
+                    setRequestedPayer('')
+                  }}
+                >
+                  すべて解除
+                </button>
               </div>
             )}
             <SummaryCards expenses={filteredExpenses} selectedMonth={selectedMonth} />
@@ -155,7 +198,7 @@ function App() {
                 <div className="xl:col-span-2"><CategoryPieChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
               </div>
             </Suspense>
-            <ExpenseTable key={`${selectedMonth}:${selectedCategory}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
+            <ExpenseTable key={`${selectedMonth}:${selectedCategory}:${selectedPayer}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
             <p className="text-center text-xs text-slate-400">
               {lastUpdatedAt ? `最終読み込み ${lastUpdatedAt.toLocaleString('ja-JP')}` : ''}
             </p>
