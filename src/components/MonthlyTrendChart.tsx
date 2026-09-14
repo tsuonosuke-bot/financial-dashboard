@@ -1,45 +1,63 @@
 import { useMemo } from 'react'
 import {
+  Bar,
   CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
+import { amountOf, isIncome, isSpending, monthKey, monthLabel, shiftMonthKey, yen } from '../lib/finance'
 import type { Expense } from '../lib/types'
 
 type Props = {
   expenses: Expense[]
+  selectedMonth: string
 }
 
-const yen = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' })
-
-export function MonthlyTrendChart({ expenses }: Props) {
+export function MonthlyTrendChart({ expenses, selectedMonth }: Props) {
   const data = useMemo(() => {
-    const totals = new Map<string, number>()
-    for (const e of expenses) {
-      const key = e.transaction_date.slice(0, 7)
-      totals.set(key, (totals.get(key) ?? 0) + Number(e.amount))
+    const totals = new Map<string, { spending: number; income: number }>()
+    for (const expense of expenses) {
+      const key = monthKey(expense.transaction_date)
+      const current = totals.get(key) ?? { spending: 0, income: 0 }
+      if (isSpending(expense)) current.spending += amountOf(expense)
+      if (isIncome(expense)) current.income += Math.abs(amountOf(expense))
+      totals.set(key, current)
     }
-    return Array.from(totals.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, total]) => ({ month, total }))
-  }, [expenses])
+
+    return Array.from({ length: 12 }, (_, index) => shiftMonthKey(selectedMonth, index - 11))
+      .map((month) => ({
+        month,
+        ...(totals.get(month) ?? { spending: 0, income: 0 }),
+        balance: (totals.get(month)?.income ?? 0) - (totals.get(month)?.spending ?? 0),
+      }))
+  }, [expenses, selectedMonth])
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow">
-      <h2 className="mb-3 text-lg font-semibold text-gray-800">月別支出推移</h2>
+    <section className="panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Cash flow</p>
+          <h2 className="panel-title">月別収支推移</h2>
+        </div>
+        <span className="panel-caption">〜 {monthLabel(selectedMonth)}</span>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
+        <ComposedChart data={data} margin={{ top: 12, right: 8, left: 8, bottom: 0 }}>
+          <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-          <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(v) => yen.format(Number(v))} />
-          <Line type="monotone" dataKey="total" stroke="#4f46e5" strokeWidth={2} dot={false} />
-        </LineChart>
+          <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}k`} tick={{ fontSize: 12 }} />
+          <Tooltip formatter={(value) => yen.format(Number(value))} />
+          <Legend />
+          <Bar dataKey="spending" name="支出" fill="#6366f1" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="income" name="収入" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+          <Line type="monotone" dataKey="balance" name="収支" stroke="#059669" strokeWidth={2} dot={false} />
+        </ComposedChart>
       </ResponsiveContainer>
-    </div>
+    </section>
   )
 }

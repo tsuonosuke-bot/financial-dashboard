@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import type { Expense } from '../lib/types'
+import { useCallback, useEffect, useState } from 'react'
+import { getBudgetCategories, getExpenses } from '../lib/api'
+import { createDemoExpenses, demoCategories } from '../lib/demoData'
+import type { BudgetCategory, Expense } from '../lib/types'
 
 export function useExpenses() {
+  const demoMode = import.meta.env.DEV && import.meta.env.VITE_DEMO_MODE === 'true'
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [categories, setCategories] = useState<BudgetCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
+  const [requestId, setRequestId] = useState(0)
+
+  const reload = useCallback(() => setRequestId((id) => id + 1), [])
 
   useEffect(() => {
     let cancelled = false
@@ -14,31 +21,27 @@ export function useExpenses() {
       setLoading(true)
       setError(null)
 
-      const pageSize = 1000
-      let from = 0
-      const all: Expense[] = []
-
-      while (true) {
-        const { data, error } = await supabase
-          .from('expenses')
-          .select('*')
-          .order('transaction_date', { ascending: false })
-          .range(from, from + pageSize - 1)
-
-        if (error) {
-          if (!cancelled) setError(error.message)
-          break
-        }
-        if (!data || data.length === 0) break
-
-        all.push(...(data as Expense[]))
-        if (data.length < pageSize) break
-        from += pageSize
+      if (demoMode) {
+        setExpenses(createDemoExpenses())
+        setCategories(demoCategories)
+        setLastUpdatedAt(new Date())
+        setLoading(false)
+        return
       }
 
-      if (!cancelled) {
-        setExpenses(all)
-        setLoading(false)
+      try {
+        const [all, categoryData] = await Promise.all([getExpenses(), getBudgetCategories()])
+        if (!cancelled) {
+          setExpenses(all)
+          setCategories(categoryData)
+          setLastUpdatedAt(new Date())
+          setLoading(false)
+        }
+      } catch (fetchError) {
+        if (!cancelled) {
+          setError(fetchError instanceof Error ? fetchError.message : 'データを読み込めませんでした。')
+          setLoading(false)
+        }
       }
     }
 
@@ -46,7 +49,7 @@ export function useExpenses() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [demoMode, requestId])
 
-  return { expenses, loading, error }
+  return { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode }
 }
