@@ -2,7 +2,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { ExpenseTable } from './components/ExpenseTable'
 import { SummaryCards } from './components/SummaryCards'
 import { useExpenses } from './hooks/useExpenses'
-import { currentMonthKey, monthKey, monthLabel } from './lib/finance'
+import { categoryLabel, currentMonthKey, filterExpensesByCategory, monthKey, monthLabel } from './lib/finance'
 
 const MonthlyTrendChart = lazy(() => import('./components/MonthlyTrendChart').then((module) => ({ default: module.MonthlyTrendChart })))
 const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then((module) => ({ default: module.CategoryPieChart })))
@@ -10,13 +10,26 @@ const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then
 function App() {
   const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode } = useExpenses()
   const [requestedMonth, setRequestedMonth] = useState(currentMonthKey())
+  const [requestedCategory, setRequestedCategory] = useState('')
   const availableMonths = useMemo(
     () => Array.from(new Set(expenses.map((expense) => monthKey(expense.transaction_date)))).sort().reverse(),
     [expenses],
   )
+  const availableCategories = useMemo(
+    () => Array.from(new Set([
+      ...categories.map((category) => category.name),
+      ...expenses.map((expense) => expense.category),
+    ])).sort(),
+    [categories, expenses],
+  )
   const selectedMonth = availableMonths.includes(requestedMonth)
     ? requestedMonth
     : (availableMonths[0] ?? requestedMonth)
+  const selectedCategory = availableCategories.includes(requestedCategory) ? requestedCategory : ''
+  const filteredExpenses = useMemo(
+    () => filterExpensesByCategory(expenses, selectedCategory),
+    [expenses, selectedCategory],
+  )
   const selectedMonthIndex = availableMonths.indexOf(selectedMonth)
   const newestTransaction = expenses.reduce(
     (latest, expense) => expense.transaction_date > latest ? expense.transaction_date : latest,
@@ -75,48 +88,74 @@ function App() {
                 デモモードです。Supabaseの実データは読み込んでいません。
               </div>
             )}
-            <section className="month-toolbar" aria-label="表示月の選択">
+            <section className="month-toolbar" aria-label="表示条件の選択">
               <div>
-                <p className="eyebrow">Period</p>
-                <p className="text-sm font-semibold text-slate-700">表示する月</p>
+                <p className="eyebrow">Filters</p>
+                <p className="text-sm font-semibold text-slate-700">表示条件</p>
+                <p className="mt-1 text-xs text-slate-500">月とカテゴリを組み合わせて集計します</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  className="month-nav-button"
-                  disabled={selectedMonthIndex < 0 || selectedMonthIndex === availableMonths.length - 1}
-                  onClick={() => setRequestedMonth(availableMonths[selectedMonthIndex + 1])}
-                >
-                  ← 前月
-                </button>
-                <select
-                  aria-label="表示する月"
-                  className="month-select"
-                  value={selectedMonth}
-                  onChange={(event) => setRequestedMonth(event.target.value)}
-                >
-                  {availableMonths.map((month) => (
-                    <option key={month} value={month}>{monthLabel(month)}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="month-nav-button"
-                  disabled={selectedMonthIndex <= 0}
-                  onClick={() => setRequestedMonth(availableMonths[selectedMonthIndex - 1])}
-                >
-                  翌月 →
-                </button>
+              <div className="flex w-full flex-col gap-3 sm:w-auto lg:flex-row lg:items-end">
+                <div>
+                  <label className="toolbar-label" htmlFor="month-filter">月</label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="month-nav-button"
+                      disabled={selectedMonthIndex < 0 || selectedMonthIndex === availableMonths.length - 1}
+                      onClick={() => setRequestedMonth(availableMonths[selectedMonthIndex + 1])}
+                    >
+                      ← 前月
+                    </button>
+                    <select
+                      id="month-filter"
+                      className="month-select"
+                      value={selectedMonth}
+                      onChange={(event) => setRequestedMonth(event.target.value)}
+                    >
+                      {availableMonths.map((month) => (
+                        <option key={month} value={month}>{monthLabel(month)}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="month-nav-button"
+                      disabled={selectedMonthIndex <= 0}
+                      onClick={() => setRequestedMonth(availableMonths[selectedMonthIndex - 1])}
+                    >
+                      翌月 →
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="toolbar-label" htmlFor="category-filter">カテゴリ</label>
+                  <select
+                    id="category-filter"
+                    className="category-select"
+                    value={selectedCategory}
+                    onChange={(event) => setRequestedCategory(event.target.value)}
+                  >
+                    <option value="">すべてのカテゴリ</option>
+                    {availableCategories.map((category) => (
+                      <option key={category} value={category}>{categoryLabel(category)}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </section>
-            <SummaryCards expenses={expenses} selectedMonth={selectedMonth} />
+            {selectedCategory && (
+              <div className="active-filter" role="status">
+                <span>カテゴリ: {categoryLabel(selectedCategory)}</span>
+                <button type="button" onClick={() => setRequestedCategory('')}>解除</button>
+              </div>
+            )}
+            <SummaryCards expenses={filteredExpenses} selectedMonth={selectedMonth} />
             <Suspense fallback={<div className="panel grid min-h-80 place-items-center text-sm text-slate-500">グラフを読み込んでいます</div>}>
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-                <div className="xl:col-span-3"><MonthlyTrendChart expenses={expenses} selectedMonth={selectedMonth} /></div>
-                <div className="xl:col-span-2"><CategoryPieChart expenses={expenses} selectedMonth={selectedMonth} /></div>
+                <div className="xl:col-span-3"><MonthlyTrendChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
+                <div className="xl:col-span-2"><CategoryPieChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
               </div>
             </Suspense>
-            <ExpenseTable key={selectedMonth} expenses={expenses} categories={categories} selectedMonth={selectedMonth} />
+            <ExpenseTable key={`${selectedMonth}:${selectedCategory}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
             <p className="text-center text-xs text-slate-400">
               {lastUpdatedAt ? `最終読み込み ${lastUpdatedAt.toLocaleString('ja-JP')}` : ''}
             </p>

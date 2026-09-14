@@ -43,3 +43,8 @@ export function isSpending(expense: Expense) {
 export function categoryLabel(category: string) {
   return category.replace(/^\d+_/, '')
 }
+
+export function filterExpensesByCategory(expenses: Expense[], category: string) {
+  if (!category) return expenses
+  return expenses.filter((expense) => expense.category === category)
+}

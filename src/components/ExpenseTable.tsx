@@ -1,28 +1,19 @@
 import { useMemo, useState } from 'react'
 import { categoryLabel, isIncome, monthKey, monthLabel, yen } from '../lib/finance'
-import type { BudgetCategory, Expense } from '../lib/types'
+import type { Expense } from '../lib/types'
 
 type Props = {
   expenses: Expense[]
-  categories: BudgetCategory[]
   selectedMonth: string
 }
 
-export function ExpenseTable({ expenses, categories: categoryMaster, selectedMonth }: Props) {
+export function ExpenseTable({ expenses, selectedMonth }: Props) {
   const pageSize = 50
-  const [categoryFilter, setCategoryFilter] = useState('')
   const [payerFilter, setPayerFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
-
-  const categories = useMemo(() => {
-    const names = categoryMaster.length > 0
-      ? categoryMaster.map((item) => item.name)
-      : expenses.map((item) => item.category)
-    return Array.from(new Set(names)).sort()
-  }, [categoryMaster, expenses])
 
   const monthExpenses = useMemo(
     () => expenses.filter((expense) => monthKey(expense.transaction_date) === selectedMonth),
@@ -35,7 +26,6 @@ export function ExpenseTable({ expenses, categories: categoryMaster, selectedMon
   )
 
   const filtered = useMemo(() => monthExpenses.filter((expense) => {
-    if (categoryFilter && expense.category !== categoryFilter) return false
     if (payerFilter && expense.payer !== payerFilter) return false
     if (dateFrom && expense.transaction_date < dateFrom) return false
     if (dateTo && expense.transaction_date > dateTo) return false
@@ -44,7 +34,7 @@ export function ExpenseTable({ expenses, categories: categoryMaster, selectedMon
       if (!haystack.includes(query.toLocaleLowerCase('ja'))) return false
     }
     return true
-  }), [monthExpenses, categoryFilter, payerFilter, dateFrom, dateTo, query])
+  }), [monthExpenses, payerFilter, dateFrom, dateTo, query])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, pageCount)
@@ -59,7 +49,6 @@ export function ExpenseTable({ expenses, categories: categoryMaster, selectedMon
   }
 
   const clearFilters = () => {
-    setCategoryFilter('')
     setPayerFilter('')
     setDateFrom('')
     setDateTo('')
@@ -82,7 +71,7 @@ export function ExpenseTable({ expenses, categories: categoryMaster, selectedMon
         </div>
       </div>
 
-      <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+      <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <input
           type="search"
           className="filter-control xl:col-span-2"
@@ -90,19 +79,13 @@ export function ExpenseTable({ expenses, categories: categoryMaster, selectedMon
           value={query}
           onChange={(event) => updateFilter(setQuery, event.target.value)}
         />
-        <select className="filter-control" value={categoryFilter} onChange={(event) => updateFilter(setCategoryFilter, event.target.value)}>
-          <option value="">カテゴリ: すべて</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>{categoryLabel(category)}</option>
-          ))}
-        </select>
         <select className="filter-control" value={payerFilter} onChange={(event) => updateFilter(setPayerFilter, event.target.value)}>
           <option value="">支払者: すべて</option>
           {payers.map((payer) => <option key={payer} value={payer}>{payer}</option>)}
         </select>
         <input type="date" aria-label="開始日" className="filter-control" value={dateFrom} onChange={(event) => updateFilter(setDateFrom, event.target.value)} />
         <input type="date" aria-label="終了日" className="filter-control" value={dateTo} onChange={(event) => updateFilter(setDateTo, event.target.value)} />
-        <button type="button" className="filter-reset" onClick={clearFilters}>条件をクリア</button>
+        <button type="button" className="filter-reset" onClick={clearFilters}>明細条件をクリア</button>
       </div>
 
       <div className="max-h-[34rem] overflow-auto rounded-xl border border-slate-200">
