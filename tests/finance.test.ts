@@ -56,7 +56,7 @@ test('カテゴリと支払者のフィルターを組み合わせられる', ()
   assert.deepEqual(filterExpensesByPayer(byCategory, '家族'), [])
 })
 
-test('前月比較は収入を含めず支出だけで計算する', () => {
+test('収支前月比は各月の収入と支出の差を比較する', () => {
   const comparisonExpenses: Expense[] = [
     ...expenses,
     { ...expenses[0], id: 3, transaction_date: '2026-08-10', amount: 5000 },
@@ -67,7 +67,10 @@ test('前月比較は収入を含めず支出だけで計算する', () => {
   const summary = summarizeMonth(comparisonExpenses, '2026-09')
 
   assert.equal(summary.spending, 4200)
-  assert.equal(summary.previousMonthSpending, 5000)
-  assert.equal(summary.spendingDiff, -800)
   assert.equal(summary.income, 600000)
+  assert.equal(summary.balance, 595800)
+  assert.equal(summary.previousMonthSpending, 5000)
+  assert.equal(summary.previousMonthIncome, 500000)
+  assert.equal(summary.previousMonthBalance, 495000)
+  assert.equal(summary.balanceDiff, 100800)
 })

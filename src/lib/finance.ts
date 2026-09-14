@@ -59,20 +59,27 @@ export function summarizeMonth(expenses: Expense[], selectedMonth: string) {
   let spending = 0
   let income = 0
   let previousMonthSpending = 0
+  let previousMonthIncome = 0
 
   for (const expense of expenses) {
     const key = monthKey(expense.transaction_date)
     if (key === selectedMonth && isSpending(expense)) spending += amountOf(expense)
     if (key === selectedMonth && isIncome(expense)) income += Math.abs(amountOf(expense))
     if (key === previousMonth && isSpending(expense)) previousMonthSpending += amountOf(expense)
+    if (key === previousMonth && isIncome(expense)) previousMonthIncome += Math.abs(amountOf(expense))
   }
+
+  const balance = income - spending
+  const previousMonthBalance = previousMonthIncome - previousMonthSpending
 
   return {
     selectedMonth,
     spending,
     income,
-    balance: income - spending,
+    balance,
     previousMonthSpending,
-    spendingDiff: spending - previousMonthSpending,
+    previousMonthIncome,
+    previousMonthBalance,
+    balanceDiff: balance - previousMonthBalance,
   }
 }

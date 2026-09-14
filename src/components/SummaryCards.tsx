@@ -13,9 +13,10 @@ type Props = {
 
 export function SummaryCards({ expenses, selectedMonth }: Props) {
   const summary = useMemo(() => summarizeMonth(expenses, selectedMonth), [expenses, selectedMonth])
-  const spendingChangeLabel = summary.spendingDiff === 0
+  const balanceChangeLabel = summary.balanceDiff === 0
     ? '前月と同額'
-    : `${yen.format(Math.abs(summary.spendingDiff))}${summary.spendingDiff > 0 ? '増' : '減'}`
+    : `${yen.format(Math.abs(summary.balanceDiff))}${summary.balanceDiff > 0 ? '増' : '減'}`
+  const signedYen = (amount: number) => `${amount >= 0 ? '+' : ''}${yen.format(amount)}`
 
   return (
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={`${monthLabel(selectedMonth)}の概要`}>
@@ -37,12 +38,12 @@ export function SummaryCards({ expenses, selectedMonth }: Props) {
         <p className="summary-note">収入 − 支出</p>
       </div>
       <div className="summary-card border-l-4 border-l-amber-500">
-        <p className="summary-label">支出の前月比較</p>
-        <p className={`summary-value ${summary.spendingDiff <= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-          {spendingChangeLabel}
+        <p className="summary-label">収支前月比</p>
+        <p className={`summary-value ${summary.balanceDiff >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+          {balanceChangeLabel}
         </p>
         <p className="summary-note">
-          前月 {yen.format(summary.previousMonthSpending)} → 今月 {yen.format(summary.spending)}
+          前月収支 {signedYen(summary.previousMonthBalance)} → 今月収支 {signedYen(summary.balance)}
         </p>
       </div>
     </section>
