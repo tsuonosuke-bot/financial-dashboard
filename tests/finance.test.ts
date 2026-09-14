@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { filterExpensesByCategory, filterExpensesByPayer } from '../src/lib/finance.ts'
+import { filterExpensesByCategory, filterExpensesByPayer, summarizeMonth } from '../src/lib/finance.ts'
 import type { Expense } from '../src/lib/types.ts'
 
 const expenses: Expense[] = [
@@ -54,4 +54,20 @@ test('カテゴリと支払者のフィルターを組み合わせられる', ()
   const byCategory = filterExpensesByCategory(expenses, '10_食費')
   assert.deepEqual(filterExpensesByPayer(byCategory, '健介').map((expense) => expense.id), [1])
   assert.deepEqual(filterExpensesByPayer(byCategory, '家族'), [])
+})
+
+test('前月比較は収入を含めず支出だけで計算する', () => {
+  const comparisonExpenses: Expense[] = [
+    ...expenses,
+    { ...expenses[0], id: 3, transaction_date: '2026-08-10', amount: 5000 },
+    { ...expenses[0], id: 4, transaction_date: '2026-08-25', amount: -500000, category: '80_収入' },
+    { ...expenses[0], id: 5, transaction_date: '2026-09-25', amount: -600000, category: '80_収入' },
+  ]
+
+  const summary = summarizeMonth(comparisonExpenses, '2026-09')
+
+  assert.equal(summary.spending, 4200)
+  assert.equal(summary.previousMonthSpending, 5000)
+  assert.equal(summary.spendingDiff, -800)
+  assert.equal(summary.income, 600000)
 })

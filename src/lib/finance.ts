@@ -53,3 +53,26 @@ export function filterExpensesByPayer(expenses: Expense[], payer: string) {
   if (!payer) return expenses
   return expenses.filter((expense) => expense.payer === payer)
 }
+
+export function summarizeMonth(expenses: Expense[], selectedMonth: string) {
+  const previousMonth = shiftMonthKey(selectedMonth, -1)
+  let spending = 0
+  let income = 0
+  let previousMonthSpending = 0
+
+  for (const expense of expenses) {
+    const key = monthKey(expense.transaction_date)
+    if (key === selectedMonth && isSpending(expense)) spending += amountOf(expense)
+    if (key === selectedMonth && isIncome(expense)) income += Math.abs(amountOf(expense))
+    if (key === previousMonth && isSpending(expense)) previousMonthSpending += amountOf(expense)
+  }
+
+  return {
+    selectedMonth,
+    spending,
+    income,
+    balance: income - spending,
+    previousMonthSpending,
+    spendingDiff: spending - previousMonthSpending,
+  }
+}
