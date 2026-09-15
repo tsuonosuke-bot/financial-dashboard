@@ -1,13 +1,14 @@
-import type { BudgetCategory, Expense } from './types'
+import type { BudgetCategory, Expense, ExpenseDraft } from './types'
 import { parseBudgetCategory, parseExpense, parsePageEnvelope } from './apiValidation'
 
 type ErrorBody = { error?: unknown }
 
-async function requestJson(path: string): Promise<unknown> {
+async function requestJson(path: string, init: RequestInit = {}): Promise<unknown> {
   const response = await fetch(path, {
-    method: 'GET',
     credentials: 'same-origin',
-    headers: { Accept: 'application/json' },
+    method: 'GET',
+    ...init,
+    headers: { Accept: 'application/json', ...init.headers },
   })
   if (!response.ok) {
     let message = `APIエラー (${response.status})`
@@ -49,4 +50,16 @@ export function getExpenses(): Promise<Expense[]> {
 
 export function getBudgetCategories(): Promise<BudgetCategory[]> {
   return getAllPages('/api/budget-categories', parseBudgetCategory)
+}
+
+export async function createExpense(input: ExpenseDraft): Promise<Expense> {
+  const data = await requestJson('/api/expenses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Dashboard-Action': 'expense-create',
+    },
+    body: JSON.stringify(input),
+  })
+  return parseExpense(data)
 }

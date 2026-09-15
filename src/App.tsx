@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ExpenseFormModal } from './components/ExpenseFormModal'
 import { ExpenseTable } from './components/ExpenseTable'
 import { SummaryCards } from './components/SummaryCards'
 import { useExpenses } from './hooks/useExpenses'
@@ -10,15 +11,19 @@ import {
   monthKey,
   monthLabel,
 } from './lib/finance'
+import type { ExpenseDraft } from './lib/types'
 
 const MonthlyTrendChart = lazy(() => import('./components/MonthlyTrendChart').then((module) => ({ default: module.MonthlyTrendChart })))
 const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then((module) => ({ default: module.CategoryPieChart })))
 
 function App() {
-  const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode } = useExpenses()
+  const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense } = useExpenses()
   const [requestedMonth, setRequestedMonth] = useState(currentMonthKey())
   const [requestedCategory, setRequestedCategory] = useState('')
   const [requestedPayer, setRequestedPayer] = useState('')
+  const [entryOpen, setEntryOpen] = useState(() => new URLSearchParams(window.location.search).get('new') === 'expense')
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const availableMonths = useMemo(
     () => Array.from(new Set(expenses.map((expense) => monthKey(expense.transaction_date)))).sort().reverse(),
     [expenses],
@@ -54,16 +59,34 @@ function App() {
     '',
   )
 
+  const closeEntry = () => {
+    setEntryOpen(false)
+    setActionError(null)
+    if (new URLSearchParams(window.location.search).has('new')) window.history.replaceState(null, '', window.location.pathname)
+  }
+
+  const saveExpense = async (draft: ExpenseDraft) => {
+    setActionError(null)
+    try {
+      const created = await createExpense(draft)
+      setRequestedMonth(monthKey(created.transaction_date))
+      setNotice('家計簿に保存しました。')
+      closeEntry()
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : '家計簿を保存できませんでした。')
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <div>
+    <div className="app-page">
+      <header className="app-header">
+        <div className="app-header-inner">
+          <div className="page-heading">
             <p className="eyebrow">Personal finance</p>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">家計簿ダッシュボード</h1>
-            <p className="mt-1 text-sm text-slate-500">日々のお金の流れを、迷わず把握する。</p>
+            <h1>家計簿</h1>
+            <p>日々のお金の流れを確認・記録</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="header-actions">
             <a className="hub-button" href="https://personal-dashboard-7md.pages.dev/">
               ← Hub
             </a>
@@ -77,11 +100,15 @@ function App() {
               <span aria-hidden="true">↻</span>
               {loading ? '更新中' : '再読み込み'}
             </button>
+            <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEntryOpen(true) }} disabled={loading || demoMode}>
+              ＋ 家計簿を記録
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-6 px-5 py-7 lg:px-8">
+      <main className="app-main">
+        {notice && <div className="save-notice" role="status"><span>{notice}</span><button type="button" aria-label="閉じる" onClick={() => setNotice(null)}>×</button></div>}
         {loading && (
           <div className="panel grid min-h-64 place-items-center">
             <div className="text-center">
@@ -208,6 +235,16 @@ function App() {
           </div>
         )}
       </main>
+      {entryOpen && (
+        <ExpenseFormModal
+          categories={categories}
+          payers={availablePayers}
+          saving={mutating}
+          error={actionError}
+          onClose={closeEntry}
+          onSave={(draft) => void saveExpense(draft)}
+        />
+      )}
     </div>
   )
 }

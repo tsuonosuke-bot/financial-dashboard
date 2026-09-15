@@ -62,7 +62,8 @@ npm run preview   # ビルド成果物のプレビュー
 - 選択月の支出・収入・収支・収支前月比
 - 選択月までの12か月の収支推移
 - 選択月のカテゴリ別支出内訳
-- 選択月の収支明細（検索・期間フィルター）
+- 選択月の収支明細（検索・期間・収支種別・金額範囲・並び順フィルター）
+- 支出・収入の新規登録
 - `budget_categories` をカテゴリマスターとして使用
 
 金額が正の行は支出、負の行または `80_収入` カテゴリの行は収入として扱います。
@@ -74,13 +75,14 @@ Supabaseプロジェクト `plwlxwidpqbunugfxjhp` の次のテーブルを参照
 - `budget_categories(id, name, notion_url)`
 - `expenses(id, transaction_date, amount, title, category, payer, memo, notion_url, notion_created_at, created_at)`
 
-画面は同一オリジンの読み取り専用APIから全ページを取得します。
+画面は同一オリジンAPIから全ページを取得し、認証済み画面から家計簿を1件ずつ登録します。
 
 - `GET /api/expenses`
+- `POST /api/expenses`
 - `GET /api/budget-categories`
 
 APIは取得列、並び順、対象テーブル、1回あたり最大1,000件をサーバー側で固定しています。
-POSTなどの書き込みメソッドは受け付けません。
+登録時は同一オリジン・専用ヘッダー・JSON形式・日付・金額・文字数・許可項目を検証します。収入は金額を負数へ正規化して保存します。
 
 > [!NOTE]
 > `anon` の読み取り権限は無効化済みです。ブラウザはCloudflare Pages Functions経由でのみデータを取得します。

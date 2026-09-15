@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getBudgetCategories, getExpenses } from '../lib/api'
+import { createExpense as createExpenseApi, getBudgetCategories, getExpenses } from '../lib/api'
 import { createDemoExpenses, demoCategories } from '../lib/demoData'
-import type { BudgetCategory, Expense } from '../lib/types'
+import type { BudgetCategory, Expense, ExpenseDraft } from '../lib/types'
 
 export function useExpenses() {
   const demoMode = import.meta.env.DEV && import.meta.env.VITE_DEMO_MODE === 'true'
@@ -11,6 +11,7 @@ export function useExpenses() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
   const [requestId, setRequestId] = useState(0)
+  const [mutating, setMutating] = useState(false)
 
   const reload = useCallback(() => setRequestId((id) => id + 1), [])
 
@@ -51,5 +52,18 @@ export function useExpenses() {
     }
   }, [demoMode, requestId])
 
-  return { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode }
+  const createExpense = useCallback(async (input: ExpenseDraft) => {
+    if (demoMode) throw new Error('デモモードでは家計簿を保存できません。')
+    setMutating(true)
+    try {
+      const created = await createExpenseApi(input)
+      setExpenses((current) => [created, ...current])
+      setLastUpdatedAt(new Date())
+      return created
+    } finally {
+      setMutating(false)
+    }
+  }, [demoMode])
+
+  return { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense }
 }

@@ -12,6 +12,10 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [query, setQuery] = useState('')
+  const [type, setType] = useState<'all' | 'expense' | 'income'>('all')
+  const [amountMin, setAmountMin] = useState('')
+  const [amountMax, setAmountMax] = useState('')
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'amount-desc' | 'amount-asc'>('newest')
   const [page, setPage] = useState(1)
 
   const monthExpenses = useMemo(
@@ -22,12 +26,22 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
   const filtered = useMemo(() => monthExpenses.filter((expense) => {
     if (dateFrom && expense.transaction_date < dateFrom) return false
     if (dateTo && expense.transaction_date > dateTo) return false
+    if (type === 'expense' && isIncome(expense)) return false
+    if (type === 'income' && !isIncome(expense)) return false
+    const absoluteAmount = Math.abs(Number(expense.amount))
+    if (amountMin && absoluteAmount < Number(amountMin)) return false
+    if (amountMax && absoluteAmount > Number(amountMax)) return false
     if (query) {
-      const haystack = `${expense.title} ${expense.memo ?? ''}`.toLocaleLowerCase('ja')
+      const haystack = `${expense.title} ${expense.memo ?? ''} ${expense.category} ${expense.payer ?? ''}`.toLocaleLowerCase('ja')
       if (!haystack.includes(query.toLocaleLowerCase('ja'))) return false
     }
     return true
-  }), [monthExpenses, dateFrom, dateTo, query])
+  }).sort((left, right) => {
+    if (sort === 'oldest') return left.transaction_date.localeCompare(right.transaction_date) || left.id - right.id
+    if (sort === 'amount-desc') return Math.abs(Number(right.amount)) - Math.abs(Number(left.amount)) || right.id - left.id
+    if (sort === 'amount-asc') return Math.abs(Number(left.amount)) - Math.abs(Number(right.amount)) || right.id - left.id
+    return right.transaction_date.localeCompare(left.transaction_date) || right.id - left.id
+  }), [monthExpenses, dateFrom, dateTo, type, amountMin, amountMax, query, sort])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, pageCount)
@@ -45,8 +59,14 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
     setDateFrom('')
     setDateTo('')
     setQuery('')
+    setType('all')
+    setAmountMin('')
+    setAmountMax('')
+    setSort('newest')
     setPage(1)
   }
+
+  const hasFilters = Boolean(dateFrom || dateTo || query || type !== 'all' || amountMin || amountMax || sort !== 'newest')
 
   return (
     <section className="panel">
@@ -63,17 +83,25 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="transaction-filters">
         <input
           type="search"
-          className="filter-control xl:col-span-2"
-          placeholder="タイトル・メモを検索"
+          className="filter-control filter-search"
+          placeholder="内容・メモ・カテゴリ・支払者を検索"
           value={query}
           onChange={(event) => updateFilter(setQuery, event.target.value)}
         />
         <input type="date" aria-label="開始日" className="filter-control" value={dateFrom} onChange={(event) => updateFilter(setDateFrom, event.target.value)} />
         <input type="date" aria-label="終了日" className="filter-control" value={dateTo} onChange={(event) => updateFilter(setDateTo, event.target.value)} />
-        <button type="button" className="filter-reset" onClick={clearFilters}>明細条件をクリア</button>
+        <select className="filter-control" aria-label="収支種別" value={type} onChange={(event) => { setType(event.target.value as typeof type); setPage(1) }}>
+          <option value="all">支出・収入すべて</option><option value="expense">支出のみ</option><option value="income">収入のみ</option>
+        </select>
+        <input type="number" min="0" step="1" inputMode="numeric" className="filter-control" placeholder="金額 下限" aria-label="金額の下限" value={amountMin} onChange={(event) => updateFilter(setAmountMin, event.target.value)} />
+        <input type="number" min="0" step="1" inputMode="numeric" className="filter-control" placeholder="金額 上限" aria-label="金額の上限" value={amountMax} onChange={(event) => updateFilter(setAmountMax, event.target.value)} />
+        <select className="filter-control" aria-label="並び順" value={sort} onChange={(event) => { setSort(event.target.value as typeof sort); setPage(1) }}>
+          <option value="newest">新しい順</option><option value="oldest">古い順</option><option value="amount-desc">金額が高い順</option><option value="amount-asc">金額が低い順</option>
+        </select>
+        <button type="button" className="filter-reset" onClick={clearFilters} disabled={!hasFilters}>条件をクリア</button>
       </div>
 
       <div className="max-h-[34rem] overflow-auto rounded-xl border border-slate-200">
