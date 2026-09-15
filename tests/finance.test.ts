@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { filterExpensesByCategory, filterExpensesByPayer, summarizeMonth } from '../src/lib/finance.ts'
+import { filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, summarizeMonth } from '../src/lib/finance.ts'
 import type { Expense } from '../src/lib/types.ts'
 
 const expenses: Expense[] = [
@@ -40,6 +40,21 @@ test('カテゴリキーが完全一致する明細だけを返す', () => {
 
 test('該当カテゴリがなければ空配列を返す', () => {
   assert.deepEqual(filterExpensesByCategory(expenses, '99_その他'), [])
+})
+
+test('複数カテゴリをまとめて含められる', () => {
+  assert.deepEqual(
+    filterExpensesByCategories(expenses, ['10_食費', '20_交通費'], 'include').map((expense) => expense.id),
+    [1, 2],
+  )
+})
+
+test('選択した複数カテゴリを除外できる', () => {
+  assert.deepEqual(
+    filterExpensesByCategories(expenses, ['20_交通費'], 'exclude').map((expense) => expense.id),
+    [1],
+  )
+  assert.equal(filterExpensesByCategories(expenses, [], 'exclude'), expenses)
 })
 
 test('支払者未選択では全明細を返す', () => {

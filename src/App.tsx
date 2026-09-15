@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { CategoryFilter } from './components/CategoryFilter'
 import { ExpenseFormModal } from './components/ExpenseFormModal'
 import { ExpenseTable } from './components/ExpenseTable'
 import { SummaryCards } from './components/SummaryCards'
@@ -6,10 +7,11 @@ import { useExpenses } from './hooks/useExpenses'
 import {
   categoryLabel,
   currentMonthKey,
-  filterExpensesByCategory,
+  filterExpensesByCategories,
   filterExpensesByPayer,
   monthKey,
   monthLabel,
+  type CategoryFilterMode,
 } from './lib/finance'
 import type { ExpenseDraft } from './lib/types'
 
@@ -19,7 +21,8 @@ const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then
 function App() {
   const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense } = useExpenses()
   const [requestedMonth, setRequestedMonth] = useState(currentMonthKey())
-  const [requestedCategory, setRequestedCategory] = useState('')
+  const [requestedCategories, setRequestedCategories] = useState<string[]>([])
+  const [categoryMode, setCategoryMode] = useState<CategoryFilterMode>('include')
   const [requestedPayer, setRequestedPayer] = useState('')
   const [entryOpen, setEntryOpen] = useState(() => new URLSearchParams(window.location.search).get('new') === 'expense')
   const [actionError, setActionError] = useState<string | null>(null)
@@ -44,14 +47,17 @@ function App() {
   const selectedMonth = availableMonths.includes(requestedMonth)
     ? requestedMonth
     : (availableMonths[0] ?? requestedMonth)
-  const selectedCategory = availableCategories.includes(requestedCategory) ? requestedCategory : ''
+  const selectedCategories = useMemo(
+    () => requestedCategories.filter((category) => availableCategories.includes(category)),
+    [availableCategories, requestedCategories],
+  )
   const selectedPayer = availablePayers.includes(requestedPayer) ? requestedPayer : ''
   const filteredExpenses = useMemo(
     () => filterExpensesByPayer(
-      filterExpensesByCategory(expenses, selectedCategory),
+      filterExpensesByCategories(expenses, selectedCategories, categoryMode),
       selectedPayer,
     ),
-    [expenses, selectedCategory, selectedPayer],
+    [expenses, selectedCategories, categoryMode, selectedPayer],
   )
   const selectedMonthIndex = availableMonths.indexOf(selectedMonth)
   const newestTransaction = expenses.reduce(
@@ -75,6 +81,12 @@ function App() {
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : '家計簿を保存できませんでした。')
     }
+  }
+
+  const toggleCategory = (category: string) => {
+    setRequestedCategories((current) => current.includes(category)
+      ? current.filter((item) => item !== category)
+      : [...current, category])
   }
 
   return (
@@ -175,18 +187,15 @@ function App() {
                   </div>
                 </div>
                 <div>
-                  <label className="toolbar-label" htmlFor="category-filter">カテゴリ</label>
-                  <select
-                    id="category-filter"
-                    className="category-select"
-                    value={selectedCategory}
-                    onChange={(event) => setRequestedCategory(event.target.value)}
-                  >
-                    <option value="">すべてのカテゴリ</option>
-                    {availableCategories.map((category) => (
-                      <option key={category} value={category}>{categoryLabel(category)}</option>
-                    ))}
-                  </select>
+                  <span className="toolbar-label">カテゴリ</span>
+                  <CategoryFilter
+                    categories={availableCategories}
+                    selected={selectedCategories}
+                    mode={categoryMode}
+                    onModeChange={setCategoryMode}
+                    onToggle={toggleCategory}
+                    onClear={() => setRequestedCategories([])}
+                  />
                 </div>
                 <div>
                   <label className="toolbar-label" htmlFor="payer-filter">支払者</label>
@@ -204,16 +213,21 @@ function App() {
                 </div>
               </div>
             </section>
-            {(selectedCategory || selectedPayer) && (
+            {(selectedCategories.length > 0 || selectedPayer) && (
               <div className="active-filter" role="status">
                 <div className="flex flex-wrap gap-x-5 gap-y-1">
-                  {selectedCategory && <span>カテゴリ: {categoryLabel(selectedCategory)}</span>}
+                  {selectedCategories.length > 0 && (
+                    <span>
+                      カテゴリを{categoryMode === 'include' ? '含む' : '除外'}: {selectedCategories.map(categoryLabel).join('、')}
+                    </span>
+                  )}
                   {selectedPayer && <span>支払者: {selectedPayer}</span>}
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setRequestedCategory('')
+                    setRequestedCategories([])
+                    setCategoryMode('include')
                     setRequestedPayer('')
                   }}
                 >
@@ -228,7 +242,7 @@ function App() {
                 <div className="xl:col-span-2"><CategoryPieChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
               </div>
             </Suspense>
-            <ExpenseTable key={`${selectedMonth}:${selectedCategory}:${selectedPayer}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
+            <ExpenseTable key={`${selectedMonth}:${categoryMode}:${selectedCategories.join(',')}:${selectedPayer}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
             <p className="text-center text-xs text-slate-400">
               {lastUpdatedAt ? `最終読み込み ${lastUpdatedAt.toLocaleString('ja-JP')}` : ''}
             </p>

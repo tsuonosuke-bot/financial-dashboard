@@ -23,3 +23,14 @@ test('明細一覧で種別・金額・日付・キーワード・並び順を�
   assert.match(table, /transaction_date < dateFrom/)
   assert.match(table, /expense\.category.*expense\.payer/s)
 })
+
+test('カテゴリ条件で複数選択と除外を切り替えられる', async () => {
+  const [app, filter] = await Promise.all([
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/CategoryFilter.tsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(app, /filterExpensesByCategories/)
+  assert.match(filter, /含める/)
+  assert.match(filter, /除外する/)
+  assert.match(filter, /type="checkbox"/)
+})

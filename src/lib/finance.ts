@@ -44,9 +44,22 @@ export function categoryLabel(category: string) {
   return category.replace(/^\d+_/, '')
 }
 
+export type CategoryFilterMode = 'include' | 'exclude'
+
+export function filterExpensesByCategories(
+  expenses: Expense[],
+  categories: string[],
+  mode: CategoryFilterMode,
+) {
+  if (categories.length === 0) return expenses
+  const selected = new Set(categories)
+  return expenses.filter((expense) => mode === 'include'
+    ? selected.has(expense.category)
+    : !selected.has(expense.category))
+}
+
 export function filterExpensesByCategory(expenses: Expense[], category: string) {
-  if (!category) return expenses
-  return expenses.filter((expense) => expense.category === category)
+  return filterExpensesByCategories(expenses, category ? [category] : [], 'include')
 }
 
 export function filterExpensesByPayer(expenses: Expense[], payer: string) {
