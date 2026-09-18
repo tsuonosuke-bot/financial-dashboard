@@ -19,6 +19,7 @@ export function CategoryPieChart({ expenses, selectedMonth }: Props) {
 
     const sorted = Array.from(totals.entries())
       .map(([categoryKey, total]) => ({ categoryKey, category: categoryLabel(categoryKey), total }))
+      .filter((item) => item.total > 0)
       .sort((a, b) => b.total - a.total)
     const primary = sorted.slice(0, 7)
     const other = sorted.slice(7).reduce((sum, item) => sum + item.total, 0)

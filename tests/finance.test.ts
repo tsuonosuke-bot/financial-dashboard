@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { CATEGORY_COLORS, categoryColor } from '../src/lib/chartColors.ts'
-import { buildMonthlyTrendData, filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, summarizeMonth } from '../src/lib/finance.ts'
+import { buildMonthlyTrendData, filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, isIncome, isSpending, summarizeMonth } from '../src/lib/finance.ts'
 import type { Expense } from '../src/lib/types.ts'
 
 const expenses: Expense[] = [
@@ -86,6 +86,72 @@ test('月別推移の支出をカテゴリ別の積み上げデータにする',
   assert.equal(september?.['20_交通費'], 3000)
   assert.equal(september?.income, 100000)
   assert.equal(september?.balance, 95800)
+})
+
+test('非収入カテゴリの負額は収入ではなく支出の相殺として扱う', () => {
+  const offset = {
+    ...expenses[0],
+    id: 3,
+    amount: -11322,
+    category: '40_旅行費用',
+    title: 'むつみぶん',
+  }
+
+  assert.equal(isIncome(offset), false)
+  assert.equal(isSpending(offset), true)
+})
+
+test('7月の旅行費用を負額明細で相殺し、収入には含めない', () => {
+  const julyExpenses: Expense[] = [
+    {
+      ...expenses[0],
+      id: 10,
+      transaction_date: '2026-07-27',
+      amount: 302180,
+      category: '40_旅行費用',
+      title: '飛行機、ホテル',
+    },
+    {
+      ...expenses[0],
+      id: 11,
+      transaction_date: '2026-07-27',
+      amount: -11322,
+      category: '40_旅行費用',
+      title: 'むつみぶん',
+    },
+    {
+      ...expenses[0],
+      id: 12,
+      transaction_date: '2026-07-27',
+      amount: -12529,
+      category: '40_旅行費用',
+      title: 'けんすけぶん',
+    },
+    {
+      ...expenses[0],
+      id: 13,
+      transaction_date: '2026-07-25',
+      amount: -487563,
+      category: '80_収入',
+      title: '給料 (4)',
+    },
+  ]
+
+  const summary = summarizeMonth(julyExpenses, '2026-07')
+  const { data } = buildMonthlyTrendData(julyExpenses, '2026-07')
+  const july = data.find((item) => item.month === '2026-07')
+
+  assert.equal(summary.spending, 278329)
+  assert.equal(summary.income, 487563)
+  assert.equal(summary.balance, 209234)
+  assert.equal(july?.['40_旅行費用'], 278329)
+  assert.equal(july?.income, 487563)
+  assert.equal(july?.balance, 209234)
+
+  const withoutIncome = filterExpensesByCategories(julyExpenses, ['80_収入'], 'exclude')
+  const filteredSummary = summarizeMonth(withoutIncome, '2026-07')
+  assert.equal(filteredSummary.spending, 278329)
+  assert.equal(filteredSummary.income, 0)
 })
 
 test('カテゴリ色は表示中の組み合わせに左右されない', () => {

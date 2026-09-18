@@ -33,11 +33,11 @@ export function amountOf(expense: Expense) {
 }
 
 export function isIncome(expense: Expense) {
-  return amountOf(expense) < 0 || expense.category.startsWith('80_')
+  return expense.category.startsWith('80_')
 }
 
 export function isSpending(expense: Expense) {
-  return amountOf(expense) > 0 && !isIncome(expense)
+  return amountOf(expense) !== 0 && !isIncome(expense)
 }
 
 export function categoryLabel(category: string) {
