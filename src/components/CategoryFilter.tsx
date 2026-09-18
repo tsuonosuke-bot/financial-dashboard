@@ -6,20 +6,26 @@ type Props = {
   mode: CategoryFilterMode
   onModeChange: (mode: CategoryFilterMode) => void
   onToggle: (category: string) => void
+  onSelectAll: () => void
   onClear: () => void
 }
 
-function summaryLabel(selected: string[], mode: CategoryFilterMode) {
+function summaryLabel(categories: string[], selected: string[], mode: CategoryFilterMode) {
   if (selected.length === 0) return 'すべてのカテゴリ'
+  if (categories.length > 0 && selected.length === categories.length) {
+    return `全カテゴリを${mode === 'include' ? '含む' : '除外'}`
+  }
   if (selected.length === 1) return `${categoryLabel(selected[0])}を${mode === 'include' ? '含む' : '除外'}`
   return `${selected.length}カテゴリを${mode === 'include' ? '含む' : '除外'}`
 }
 
-export function CategoryFilter({ categories, selected, mode, onModeChange, onToggle, onClear }: Props) {
+export function CategoryFilter({ categories, selected, mode, onModeChange, onToggle, onSelectAll, onClear }: Props) {
+  const allSelected = categories.length > 0 && selected.length === categories.length
+
   return (
     <details className="category-filter">
       <summary aria-label="カテゴリ条件を開く">
-        <span>{summaryLabel(selected, mode)}</span>
+        <span>{summaryLabel(categories, selected, mode)}</span>
         <span aria-hidden="true">⌄</span>
       </summary>
       <div className="category-filter-popover">
@@ -42,8 +48,11 @@ export function CategoryFilter({ categories, selected, mode, onModeChange, onTog
           ))}
         </div>
         <div className="category-filter-footer">
-          <span>{selected.length ? `${selected.length}件選択中` : '選択なし'}</span>
-          <button type="button" onClick={onClear} disabled={selected.length === 0}>選択をクリア</button>
+          <span>{selected.length}/{categories.length}件選択</span>
+          <div className="category-filter-actions" role="group" aria-label="カテゴリの一括操作">
+            <button type="button" aria-label="カテゴリをすべて選択" onClick={onSelectAll} disabled={categories.length === 0 || allSelected}>すべて選択</button>
+            <button type="button" aria-label="カテゴリの選択をすべて解除" onClick={onClear} disabled={selected.length === 0}>すべて解除</button>
+          </div>
         </div>
       </div>
     </details>

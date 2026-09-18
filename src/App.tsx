@@ -51,6 +51,13 @@ function App() {
     () => requestedCategories.filter((category) => availableCategories.includes(category)),
     [availableCategories, requestedCategories],
   )
+  const selectedCategorySummary = useMemo(() => {
+    if (selectedCategories.length === 0) return ''
+    if (selectedCategories.length === availableCategories.length) return 'すべてのカテゴリ'
+    const labels = selectedCategories.map(categoryLabel)
+    if (labels.length <= 2) return labels.join('、')
+    return `${labels.slice(0, 2).join('、')} ほか${labels.length - 2}件`
+  }, [availableCategories.length, selectedCategories])
   const selectedPayer = availablePayers.includes(requestedPayer) ? requestedPayer : ''
   const filteredExpenses = useMemo(
     () => filterExpensesByPayer(
@@ -194,6 +201,7 @@ function App() {
                     mode={categoryMode}
                     onModeChange={setCategoryMode}
                     onToggle={toggleCategory}
+                    onSelectAll={() => setRequestedCategories(availableCategories)}
                     onClear={() => setRequestedCategories([])}
                   />
                 </div>
@@ -218,7 +226,7 @@ function App() {
                 <div className="flex flex-wrap gap-x-5 gap-y-1">
                   {selectedCategories.length > 0 && (
                     <span>
-                      カテゴリを{categoryMode === 'include' ? '含む' : '除外'}: {selectedCategories.map(categoryLabel).join('、')}
+                      {categoryMode === 'include' ? '含める' : '除外する'}カテゴリ: {selectedCategorySummary}
                     </span>
                   )}
                   {selectedPayer && <span>支払者: {selectedPayer}</span>}

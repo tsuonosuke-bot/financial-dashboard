@@ -121,7 +121,9 @@ select {
 .category-options label:hover { background: #f1f6f8; }
 .category-options input { width: 16px; height: 16px; margin: 0; accent-color: #315f78; }
 .category-filter-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding: 9px 3px 0; border-top: 1px solid #e7ebed; color: #7a878d; font-size: 10px; }
-.category-filter-footer button { border: 0; background: transparent; color: #315f78; font-size: 11px; font-weight: 700; cursor: pointer; }
+.category-filter-actions { display: flex; align-items: center; gap: 2px; }
+.category-filter-footer button { min-height: 28px; padding: 3px 6px; border: 0; border-radius: 6px; background: transparent; color: #315f78; font-size: 11px; font-weight: 700; cursor: pointer; }
+.category-filter-footer button:hover:not(:disabled) { background: #eef4f6; }
 .category-filter-footer button:disabled { cursor: default; opacity: .4; }
 
 .active-filter {

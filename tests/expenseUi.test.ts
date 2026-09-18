@@ -33,4 +33,8 @@ test('カテゴリ条件で複数選択と除外を切り替えられる', async
   assert.match(filter, /含める/)
   assert.match(filter, /除外する/)
   assert.match(filter, /type="checkbox"/)
+  assert.match(filter, /すべて選択/)
+  assert.match(filter, /すべて解除/)
+  assert.match(filter, /aria-label="カテゴリをすべて選択"/)
+  assert.match(app, /onSelectAll/)
 })
