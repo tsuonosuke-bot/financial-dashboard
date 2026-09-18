@@ -46,3 +46,12 @@ test('月別収支推移は支出をカテゴリ別の積み上げ棒で表示�
   assert.match(chart, /height=\{360\}/)
   assert.doesNotMatch(chart, /dataKey="spending"/)
 })
+
+test('棒グラフと収支線を個別に表示切り替えできる', async () => {
+  const chart = await readFile(new URL('../src/components/MonthlyTrendChart.tsx', import.meta.url), 'utf8')
+  assert.match(chart, /aria-label="グラフの表示切り替え"/)
+  assert.match(chart, /aria-pressed=\{showBars\}/)
+  assert.match(chart, /aria-pressed=\{showBalance\}/)
+  assert.match(chart, /showBars && categories\.map/)
+  assert.match(chart, /showBalance && <Line/)
+})

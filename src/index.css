@@ -157,11 +157,22 @@ select {
 .filter-controls { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .chart-panel { padding: 16px; }
 .chart-panel .panel-heading { margin-bottom: 9px; }
+.trend-heading-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 7px; }
+.chart-series-toggles { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; }
+.chart-series-toggles button { display: inline-flex; min-height: 27px; align-items: center; gap: 5px; padding: 3px 9px; border: 0; border-radius: 999px; background: transparent; color: #64748b; font-size: 11px; font-weight: 700; cursor: pointer; }
+.chart-series-toggles button[aria-pressed="true"] { background: #fff; color: #334155; box-shadow: 0 1px 2px rgb(15 23 42 / 12%); }
+.chart-series-toggles button:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.chart-series-toggles button i { display: inline-block; opacity: .35; }
+.chart-series-toggles button[aria-pressed="true"] i { opacity: 1; }
+.bar-toggle-mark { width: 10px; height: 9px; border-radius: 2px; background: linear-gradient(to right, #6366f1 0 28%, transparent 28% 36%, #38bdf8 36% 64%, transparent 64% 72%, #f59e0b 72%); }
+.line-toggle-mark { width: 12px; height: 2px; border-radius: 999px; background: #059669; }
 .trend-legend { display: flex; align-items: center; gap: 12px; min-height: 28px; overflow-x: auto; padding: 1px 2px 4px; color: #53616a; font-size: 11px; scrollbar-width: thin; }
 .trend-legend-item { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .trend-legend-item i { width: 9px; height: 9px; display: inline-block; border-radius: 3px; }
 .trend-legend-item .income-legend { background: #38bdf8; }
 .trend-legend-item .balance-legend { width: 13px; height: 2px; border-radius: 999px; background: #059669; }
+.trend-legend-empty { color: #94a3b8; }
+.trend-chart-empty { display: grid; height: 360px; place-items: center; color: #94a3b8; font-size: 13px; }
 .primary-button {
   min-height: 40px;
   padding: 8px 15px;
@@ -229,6 +240,8 @@ select {
   .dashboard-stack { gap: 12px; }
   .summary-grid { gap: 8px; }
   .summary-card { padding: 12px 14px; }
+  .chart-panel .panel-heading { flex-wrap: wrap; gap: 8px; }
+  .trend-heading-actions { width: 100%; justify-content: space-between; }
   .category-filter { min-width: 100%; }
   .category-filter-popover { position: fixed; top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: calc(100vh - 20px); }
   .category-options { max-height: min(45vh, 300px); }
