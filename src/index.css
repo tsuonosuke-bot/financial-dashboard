@@ -41,19 +41,19 @@ select {
 }
 
 .summary-card {
-  @apply rounded-xl border border-slate-200 bg-white p-5;
+  @apply rounded-xl border border-slate-200 bg-white px-4 py-3.5;
 }
 
 .summary-label {
-  @apply text-sm font-medium text-slate-500;
+  @apply text-xs font-medium text-slate-500;
 }
 
 .summary-value {
-  @apply mt-2 text-2xl font-bold tracking-tight text-slate-900;
+  @apply mt-1 text-xl font-bold leading-tight tracking-tight text-slate-900;
 }
 
 .summary-note {
-  @apply mt-2 text-xs text-slate-400;
+  @apply mt-1.5 text-[0.68rem] leading-snug text-slate-400;
 }
 
 .filter-control {
@@ -73,33 +73,33 @@ select {
 }
 
 .month-toolbar {
-  @apply flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between;
+  @apply flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
 }
 
 .month-select {
-  @apply min-h-10 rounded-xl border border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
+  @apply min-h-9 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
 }
 
 .month-nav-button {
-  @apply min-h-10 rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40;
+  @apply min-h-9 rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40;
 }
 
 .toolbar-label {
-  @apply mb-1.5 block text-xs font-bold text-slate-500;
+  @apply mb-1 block text-[0.68rem] font-bold text-slate-500;
 }
 
 .category-select {
-  @apply min-h-10 w-full min-w-52 rounded-xl border border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
+  @apply min-h-9 w-full min-w-44 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
 }
 
-.category-filter { position: relative; min-width: 230px; }
+.category-filter { position: relative; min-width: 205px; }
 .category-filter > summary {
-  min-height: 40px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #bad0da;
   border-radius: 9px;
   background: #fff;
@@ -127,7 +127,7 @@ select {
 .category-filter-footer button:disabled { cursor: default; opacity: .4; }
 
 .active-filter {
-  @apply flex items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-white px-4 py-3 text-sm font-semibold text-indigo-800 shadow-sm;
+  @apply flex items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-800 shadow-sm;
 }
 
 .active-filter button {
@@ -150,6 +150,18 @@ select {
 .page-heading > p:last-child { margin: 3px 0 0; color: #6c7780; font-size: 11px; }
 .header-actions { display: flex; align-items: center; gap: 7px; }
 .app-main { width: min(1240px, calc(100% - 32px)); margin: 0 auto; padding: 20px 0 52px; }
+.dashboard-stack { display: grid; gap: 16px; }
+.summary-grid { gap: 12px; }
+.filter-intro-title { display: flex; align-items: baseline; gap: 9px; }
+.filter-intro-title .eyebrow, .filter-intro-title p { margin-block: 0; }
+.filter-controls { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.chart-panel { padding: 16px; }
+.chart-panel .panel-heading { margin-bottom: 9px; }
+.trend-legend { display: flex; align-items: center; gap: 12px; min-height: 28px; overflow-x: auto; padding: 1px 2px 4px; color: #53616a; font-size: 11px; scrollbar-width: thin; }
+.trend-legend-item { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.trend-legend-item i { width: 9px; height: 9px; display: inline-block; border-radius: 3px; }
+.trend-legend-item .income-legend { background: #38bdf8; }
+.trend-legend-item .balance-legend { width: 13px; height: 2px; border-radius: 999px; background: #059669; }
 .primary-button {
   min-height: 40px;
   padding: 8px 15px;
@@ -195,8 +207,13 @@ select {
 .entry-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
 @media (max-width: 850px) {
+  .filter-intro > p:last-child { display: none; }
   .transaction-filters { grid-template-columns: 1fr 1fr; }
   .filter-search { grid-column: 1 / -1; }
+}
+
+@media (min-width: 640px) {
+  .filter-controls { width: auto; flex-direction: row; align-items: end; }
 }
 
 @media (max-width: 640px) {
@@ -209,6 +226,9 @@ select {
   .add-button::after { content: "+"; font-size: 20px; }
   .hub-button, .refresh-button { min-height: 38px; padding-inline: 10px; }
   .app-main { width: calc(100% - 20px); padding-top: 14px; }
+  .dashboard-stack { gap: 12px; }
+  .summary-grid { gap: 8px; }
+  .summary-card { padding: 12px 14px; }
   .category-filter { min-width: 100%; }
   .category-filter-popover { position: fixed; top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: calc(100vh - 20px); }
   .category-options { max-height: min(45vh, 300px); }

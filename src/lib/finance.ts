@@ -67,6 +67,63 @@ export function filterExpensesByPayer(expenses: Expense[], payer: string) {
   return expenses.filter((expense) => expense.payer === payer)
 }
 
+export type MonthlyTrendDatum = {
+  month: string
+  income: number
+  balance: number
+  [key: string]: string | number
+}
+
+export function buildMonthlyTrendData(expenses: Expense[], selectedMonth: string) {
+  const months = Array.from({ length: 12 }, (_, index) => shiftMonthKey(selectedMonth, index - 11))
+  const visibleMonths = new Set(months)
+  const totals = new Map<string, {
+    spending: number
+    income: number
+    spendingByCategory: Map<string, number>
+  }>()
+  const categorySet = new Set<string>()
+
+  for (const expense of expenses) {
+    const key = monthKey(expense.transaction_date)
+    if (!visibleMonths.has(key)) continue
+    const current = totals.get(key) ?? {
+      spending: 0,
+      income: 0,
+      spendingByCategory: new Map<string, number>(),
+    }
+
+    if (isSpending(expense)) {
+      const amount = amountOf(expense)
+      current.spending += amount
+      current.spendingByCategory.set(
+        expense.category,
+        (current.spendingByCategory.get(expense.category) ?? 0) + amount,
+      )
+      categorySet.add(expense.category)
+    }
+    if (isIncome(expense)) current.income += Math.abs(amountOf(expense))
+    totals.set(key, current)
+  }
+
+  const categories = Array.from(categorySet).sort()
+  const data = months.map((month) => {
+    const current = totals.get(month)
+    const row: MonthlyTrendDatum = {
+      month,
+      income: current?.income ?? 0,
+      balance: (current?.income ?? 0) - (current?.spending ?? 0),
+    }
+    for (const category of categories) {
+      const total = current?.spendingByCategory.get(category)
+      if (total) row[category] = total
+    }
+    return row
+  })
+
+  return { categories, data }
+}
+
 export function summarizeMonth(expenses: Expense[], selectedMonth: string) {
   const previousMonth = shiftMonthKey(selectedMonth, -1)
   let spending = 0

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, summarizeMonth } from '../src/lib/finance.ts'
+import { CATEGORY_COLORS, categoryColor } from '../src/lib/chartColors.ts'
+import { buildMonthlyTrendData, filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, summarizeMonth } from '../src/lib/finance.ts'
 import type { Expense } from '../src/lib/types.ts'
 
 const expenses: Expense[] = [
@@ -69,6 +70,28 @@ test('カテゴリと支払者のフィルターを組み合わせられる', ()
   const byCategory = filterExpensesByCategory(expenses, '10_食費')
   assert.deepEqual(filterExpensesByPayer(byCategory, '健介').map((expense) => expense.id), [1])
   assert.deepEqual(filterExpensesByPayer(byCategory, '家族'), [])
+})
+
+test('月別推移の支出をカテゴリ別の積み上げデータにする', () => {
+  const trendExpenses: Expense[] = [
+    ...expenses,
+    { ...expenses[0], id: 3, amount: -100000, category: '80_収入' },
+    { ...expenses[0], id: 4, transaction_date: '2025-01-01', category: '99_期間外' },
+  ]
+  const { categories, data } = buildMonthlyTrendData(trendExpenses, '2026-09')
+  const september = data.find((item) => item.month === '2026-09')
+
+  assert.deepEqual(categories, ['10_食費', '20_交通費'])
+  assert.equal(september?.['10_食費'], 1200)
+  assert.equal(september?.['20_交通費'], 3000)
+  assert.equal(september?.income, 100000)
+  assert.equal(september?.balance, 95800)
+})
+
+test('カテゴリ色は表示中の組み合わせに左右されない', () => {
+  assert.equal(categoryColor('01_食費'), CATEGORY_COLORS[0])
+  assert.equal(categoryColor('03_住居費'), CATEGORY_COLORS[2])
+  assert.notEqual(categoryColor('01_食費'), categoryColor('03_住居費'))
 })
 
 test('収支前月比は各月の収入と支出の差を比較する', () => {

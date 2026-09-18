@@ -19,7 +19,7 @@ export function SummaryCards({ expenses, selectedMonth }: Props) {
   const signedYen = (amount: number) => `${amount >= 0 ? '+' : ''}${yen.format(amount)}`
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={`${monthLabel(selectedMonth)}の概要`}>
+    <section className="summary-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" aria-label={`${monthLabel(selectedMonth)}の概要`}>
       <div className="summary-card border-l-4 border-l-indigo-500">
         <p className="summary-label">選択月の支出</p>
         <p className="summary-value">{yen.format(summary.spending)}</p>

@@ -38,3 +38,11 @@ test('カテゴリ条件で複数選択と除外を切り替えられる', async
   assert.match(filter, /aria-label="カテゴリをすべて選択"/)
   assert.match(app, /onSelectAll/)
 })
+
+test('月別収支推移は支出をカテゴリ別の積み上げ棒で表示する', async () => {
+  const chart = await readFile(new URL('../src/components/MonthlyTrendChart.tsx', import.meta.url), 'utf8')
+  assert.match(chart, /categories\.map/)
+  assert.match(chart, /stackId="spending"/)
+  assert.match(chart, /height=\{360\}/)
+  assert.doesNotMatch(chart, /dataKey="spending"/)
+})

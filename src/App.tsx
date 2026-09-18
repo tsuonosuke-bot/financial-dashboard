@@ -149,19 +149,21 @@ function App() {
         )}
 
         {!loading && !error && (
-          <div className="space-y-6">
+          <div className="dashboard-stack">
             {demoMode && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 デモモードです。Supabaseの実データは読み込んでいません。
               </div>
             )}
             <section className="month-toolbar" aria-label="表示条件の選択">
-              <div>
-                <p className="eyebrow">Filters</p>
-                <p className="text-sm font-semibold text-slate-700">表示条件</p>
+              <div className="filter-intro">
+                <div className="filter-intro-title">
+                  <p className="eyebrow">Filters</p>
+                  <p className="text-sm font-semibold text-slate-700">表示条件</p>
+                </div>
                 <p className="mt-1 text-xs text-slate-500">月・カテゴリ・支払者を組み合わせて集計します</p>
               </div>
-              <div className="flex w-full flex-col gap-3 sm:w-auto lg:flex-row lg:items-end">
+              <div className="filter-controls">
                 <div>
                   <label className="toolbar-label" htmlFor="month-filter">月</label>
                   <div className="flex flex-wrap items-center gap-2">
@@ -245,9 +247,9 @@ function App() {
             )}
             <SummaryCards expenses={filteredExpenses} selectedMonth={selectedMonth} />
             <Suspense fallback={<div className="panel grid min-h-80 place-items-center text-sm text-slate-500">グラフを読み込んでいます</div>}>
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-                <div className="xl:col-span-3"><MonthlyTrendChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
-                <div className="xl:col-span-2"><CategoryPieChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                <div className="min-w-0 xl:col-span-2"><MonthlyTrendChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
+                <div className="min-w-0"><CategoryPieChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
               </div>
             </Suspense>
             <ExpenseTable key={`${selectedMonth}:${categoryMode}:${selectedCategories.join(',')}:${selectedPayer}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
