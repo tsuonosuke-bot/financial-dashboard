@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { TooltipContentProps } from 'recharts'
 import {
   Bar,
   CartesianGrid,
@@ -9,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { categoryColor } from '../lib/chartColors'
 import { buildMonthlyTrendData, categoryLabel, monthLabel, yen } from '../lib/finance'
 import type { Expense } from '../lib/types'
@@ -16,6 +18,29 @@ import type { Expense } from '../lib/types'
 type Props = {
   expenses: Expense[]
   selectedMonth: string
+}
+
+function TrendTooltip({ active, payload, label }: TooltipContentProps<ValueType, NameType>) {
+  if (!active || !payload || payload.length === 0) return null
+  const rows = payload.filter((entry) => Number(entry.value) !== 0)
+  if (rows.length === 0) return null
+
+  return (
+    <div className="trend-tooltip">
+      <p className="trend-tooltip-label">{monthLabel(String(label))}</p>
+      <div className="trend-tooltip-rows">
+        {rows.map((entry) => (
+          <p key={String(entry.dataKey)} className="trend-tooltip-row">
+            <span>
+              <i style={{ background: entry.color }} />
+              {entry.name}
+            </span>
+            <b>{yen.format(Number(entry.value))}</b>
+          </p>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export function MonthlyTrendChart({ expenses, selectedMonth }: Props) {
@@ -72,10 +97,7 @@ export function MonthlyTrendChart({ expenses, selectedMonth }: Props) {
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 12 }} />
             <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}k`} tick={{ fontSize: 12 }} />
-            <Tooltip
-              formatter={(value) => yen.format(Number(value))}
-              labelFormatter={(label) => monthLabel(String(label))}
-            />
+            <Tooltip content={TrendTooltip} allowEscapeViewBox={{ x: false, y: false }} />
             {showBars && categories.map((category, index) => (
               <Bar
                 key={category}
