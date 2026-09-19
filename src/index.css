@@ -173,7 +173,7 @@ select {
 .trend-legend-item .balance-legend { width: 13px; height: 2px; border-radius: 999px; background: #059669; }
 .trend-legend-empty { color: #94a3b8; }
 .trend-chart-empty { display: grid; height: 360px; place-items: center; color: #94a3b8; font-size: 13px; }
-.trend-tooltip { max-width: 200px; max-height: 260px; overflow-y: auto; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, .12); font-size: 11px; }
+.trend-tooltip { max-width: 220px; max-height: min(70vh, 420px); overflow-y: auto; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, .12); font-size: 11px; scrollbar-color: #94a3b8 #f1f5f9; scrollbar-width: thin; }
 .trend-tooltip-label { margin: 0 0 4px; color: #64748b; font-weight: 700; }
 .trend-tooltip-rows { display: grid; gap: 2px; }
 .trend-tooltip-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; color: #334155; }
