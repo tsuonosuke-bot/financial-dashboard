@@ -11,7 +11,26 @@ test('家計簿の登録メニューを表示し、専用APIへ送信する', as
   assert.match(app, /家計簿を記録/)
   assert.match(modal, /type === 'expense'/)
   assert.match(modal, /type === 'income'/)
+  assert.match(modal, /type === 'offset'/)
+  assert.match(modal, /支出の相殺/)
   assert.match(api, /X-Dashboard-Action.*expense-create/s)
+})
+
+test('明細行から既存値を編集し、更新専用APIへ送信する', async () => {
+  const [app, modal, table, api] = await Promise.all([
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/ExpenseFormModal.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/ExpenseTable.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/lib/api.ts', import.meta.url), 'utf8'),
+  ])
+  assert.match(table, /\s編集\s/)
+  assert.match(table, /onEdit\(expense\)/)
+  assert.match(app, /editingExpense/)
+  assert.match(modal, /家計簿を編集/)
+  assert.match(modal, /Math\.abs\(Number\(expense\.amount\)\)/)
+  assert.match(api, /method: 'PATCH'/)
+  assert.match(api, /X-Dashboard-Action.*expense-update/s)
+  assert.match(api, /original/)
 })
 
 test('明細一覧で種別・金額・日付・キーワード・並び順を組み合わせられる', async () => {

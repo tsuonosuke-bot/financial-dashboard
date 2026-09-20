@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { categoryLabel } from '../lib/finance'
-import type { BudgetCategory, ExpenseDraft } from '../lib/types'
+import type { BudgetCategory, Expense, ExpenseDraft } from '../lib/types'
 
 type Props = {
   categories: BudgetCategory[]
   payers: string[]
   saving: boolean
   error: string | null
+  expense?: Expense
   onClose: () => void
   onSave: (draft: ExpenseDraft) => void
 }
@@ -16,14 +17,18 @@ function todayKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
-export function ExpenseFormModal({ categories, payers, saving, error, onClose, onSave }: Props) {
-  const [type, setType] = useState<'expense' | 'income'>('expense')
-  const [date, setDate] = useState(todayKey)
-  const [amount, setAmount] = useState('')
-  const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('')
-  const [payer, setPayer] = useState('')
-  const [memo, setMemo] = useState('')
+export function ExpenseFormModal({ categories, payers, saving, error, expense, onClose, onSave }: Props) {
+  const editing = Boolean(expense)
+  const [type, setType] = useState<'expense' | 'income' | 'offset'>(() => {
+    if (expense?.category.startsWith('80_')) return 'income'
+    return expense && Number(expense.amount) < 0 ? 'offset' : 'expense'
+  })
+  const [date, setDate] = useState(() => expense?.transaction_date ?? todayKey())
+  const [amount, setAmount] = useState(() => expense ? String(Math.abs(Number(expense.amount))) : '')
+  const [title, setTitle] = useState(() => expense?.title ?? '')
+  const [category, setCategory] = useState(() => expense?.category ?? '')
+  const [payer, setPayer] = useState(() => expense?.payer ?? '')
+  const [memo, setMemo] = useState(() => expense?.memo ?? '')
 
   const visibleCategories = useMemo(() => {
     const matching = categories.filter((item) => type === 'income' ? item.name.startsWith('80_') : !item.name.startsWith('80_'))
@@ -57,13 +62,14 @@ export function ExpenseFormModal({ categories, payers, saving, error, onClose, o
     <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onClose() }}>
       <section className="entry-modal" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
         <div className="entry-modal-head">
-          <div><p className="eyebrow">New transaction</p><h2 id="expense-modal-title">家計簿を記録</h2></div>
+          <div><p className="eyebrow">{editing ? 'Edit transaction' : 'New transaction'}</p><h2 id="expense-modal-title">{editing ? '家計簿を編集' : '家計簿を記録'}</h2></div>
           <button type="button" className="modal-close" aria-label="閉じる" onClick={onClose} disabled={saving}>×</button>
         </div>
         <form onSubmit={submit}>
           <div className="type-switch" role="group" aria-label="収支の種別">
             <button type="button" className={type === 'expense' ? 'active' : ''} onClick={() => setType('expense')}>支出</button>
             <button type="button" className={type === 'income' ? 'active' : ''} onClick={() => setType('income')}>収入</button>
+            <button type="button" className={type === 'offset' ? 'active' : ''} onClick={() => setType('offset')}>支出の相殺</button>
           </div>
           <div className="entry-grid">
             <label className="entry-field"><span>日付 <b>必須</b></span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></label>
@@ -74,7 +80,7 @@ export function ExpenseFormModal({ categories, payers, saving, error, onClose, o
             <label className="entry-field full-field"><span>メモ</span><textarea rows={3} maxLength={2000} value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="任意" /></label>
           </div>
           {error && <p className="entry-error" role="alert">{error}</p>}
-          <div className="entry-actions"><button type="button" className="secondary-button" onClick={onClose} disabled={saving}>キャンセル</button><button type="submit" className="primary-button" disabled={saving}>{saving ? '保存中…' : '保存する'}</button></div>
+          <div className="entry-actions"><button type="button" className="secondary-button" onClick={onClose} disabled={saving}>キャンセル</button><button type="submit" className="primary-button" disabled={saving}>{saving ? '保存中…' : editing ? '変更を保存' : '保存する'}</button></div>
         </form>
       </section>
     </div>

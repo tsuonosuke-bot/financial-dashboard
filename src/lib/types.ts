@@ -24,5 +24,9 @@ export type ExpenseDraft = {
   category: string
   payer: string | null
   memo: string | null
-  type: 'expense' | 'income'
+  type: 'expense' | 'income' | 'offset'
 }
+
+export type ExpenseSnapshot = Pick<Expense,
+  'transaction_date' | 'amount' | 'title' | 'category' | 'payer' | 'memo'
+>

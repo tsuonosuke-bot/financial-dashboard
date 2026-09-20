@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { createExpense as createExpenseApi, getBudgetCategories, getExpenses } from '../lib/api'
+import { createExpense as createExpenseApi, getBudgetCategories, getExpenses, updateExpense as updateExpenseApi } from '../lib/api'
 import { createDemoExpenses, demoCategories } from '../lib/demoData'
 import type { BudgetCategory, Expense, ExpenseDraft } from '../lib/types'
 
@@ -65,5 +65,25 @@ export function useExpenses() {
     }
   }, [demoMode])
 
-  return { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense }
+  const updateExpense = useCallback(async (original: Expense, input: ExpenseDraft) => {
+    if (demoMode) throw new Error('デモモードでは家計簿を更新できません。')
+    setMutating(true)
+    try {
+      const updated = await updateExpenseApi(original.id, input, {
+        transaction_date: original.transaction_date,
+        amount: original.amount,
+        title: original.title,
+        category: original.category,
+        payer: original.payer,
+        memo: original.memo,
+      })
+      setExpenses((current) => current.map((expense) => expense.id === updated.id ? updated : expense))
+      setLastUpdatedAt(new Date())
+      return updated
+    } finally {
+      setMutating(false)
+    }
+  }, [demoMode])
+
+  return { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense, updateExpense }
 }

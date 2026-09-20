@@ -1,4 +1,4 @@
-import type { BudgetCategory, Expense, ExpenseDraft } from './types'
+import type { BudgetCategory, Expense, ExpenseDraft, ExpenseSnapshot } from './types'
 import { parseBudgetCategory, parseExpense, parsePageEnvelope } from './apiValidation'
 
 type ErrorBody = { error?: unknown }
@@ -60,6 +60,18 @@ export async function createExpense(input: ExpenseDraft): Promise<Expense> {
       'X-Dashboard-Action': 'expense-create',
     },
     body: JSON.stringify(input),
+  })
+  return parseExpense(data)
+}
+
+export async function updateExpense(id: number, input: ExpenseDraft, original: ExpenseSnapshot): Promise<Expense> {
+  const data = await requestJson('/api/expenses', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Dashboard-Action': 'expense-update',
+    },
+    body: JSON.stringify({ id, ...input, original }),
   })
   return parseExpense(data)
 }

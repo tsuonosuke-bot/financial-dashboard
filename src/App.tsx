@@ -13,18 +13,19 @@ import {
   monthLabel,
   type CategoryFilterMode,
 } from './lib/finance'
-import type { ExpenseDraft } from './lib/types'
+import type { Expense, ExpenseDraft } from './lib/types'
 
 const MonthlyTrendChart = lazy(() => import('./components/MonthlyTrendChart').then((module) => ({ default: module.MonthlyTrendChart })))
 const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then((module) => ({ default: module.CategoryPieChart })))
 
 function App() {
-  const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense } = useExpenses()
+  const { expenses, categories, loading, error, lastUpdatedAt, reload, demoMode, mutating, createExpense, updateExpense } = useExpenses()
   const [requestedMonth, setRequestedMonth] = useState(currentMonthKey())
   const [requestedCategories, setRequestedCategories] = useState<string[]>([])
   const [categoryMode, setCategoryMode] = useState<CategoryFilterMode>('include')
   const [requestedPayer, setRequestedPayer] = useState('')
   const [entryOpen, setEntryOpen] = useState(() => new URLSearchParams(window.location.search).get('new') === 'expense')
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const availableMonths = useMemo(
@@ -74,6 +75,7 @@ function App() {
 
   const closeEntry = () => {
     setEntryOpen(false)
+    setEditingExpense(null)
     setActionError(null)
     if (new URLSearchParams(window.location.search).has('new')) window.history.replaceState(null, '', window.location.pathname)
   }
@@ -81,9 +83,11 @@ function App() {
   const saveExpense = async (draft: ExpenseDraft) => {
     setActionError(null)
     try {
-      const created = await createExpense(draft)
-      setRequestedMonth(monthKey(created.transaction_date))
-      setNotice('家計簿に保存しました。')
+      const saved = editingExpense
+        ? await updateExpense(editingExpense, draft)
+        : await createExpense(draft)
+      setRequestedMonth(monthKey(saved.transaction_date))
+      setNotice(editingExpense ? '家計簿を更新しました。' : '家計簿に保存しました。')
       closeEntry()
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : '家計簿を保存できませんでした。')
@@ -119,7 +123,7 @@ function App() {
               <span aria-hidden="true">↻</span>
               <span>{loading ? '更新中' : '再読み込み'}</span>
             </button>
-            <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEntryOpen(true) }} disabled={loading || demoMode}>
+            <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEditingExpense(null); setEntryOpen(true) }} disabled={loading || demoMode}>
               ＋ 家計簿を記録
             </button>
           </div>
@@ -252,7 +256,16 @@ function App() {
                 <div className="min-w-0"><CategoryPieChart expenses={filteredExpenses} selectedMonth={selectedMonth} /></div>
               </div>
             </Suspense>
-            <ExpenseTable key={`${selectedMonth}:${categoryMode}:${selectedCategories.join(',')}:${selectedPayer}`} expenses={filteredExpenses} selectedMonth={selectedMonth} />
+            <ExpenseTable
+              key={`${selectedMonth}:${categoryMode}:${selectedCategories.join(',')}:${selectedPayer}`}
+              expenses={filteredExpenses}
+              selectedMonth={selectedMonth}
+              onEdit={demoMode ? undefined : (expense) => {
+                setActionError(null)
+                setEditingExpense(expense)
+                setEntryOpen(true)
+              }}
+            />
             <p className="text-center text-xs text-slate-400">
               {lastUpdatedAt ? `最終読み込み ${lastUpdatedAt.toLocaleString('ja-JP')}` : ''}
             </p>
@@ -265,6 +278,7 @@ function App() {
           payers={availablePayers}
           saving={mutating}
           error={actionError}
+          expense={editingExpense ?? undefined}
           onClose={closeEntry}
           onSave={(draft) => void saveExpense(draft)}
         />
