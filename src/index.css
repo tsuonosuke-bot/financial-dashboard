@@ -227,7 +227,7 @@ select {
 .entry-modal-head h2 { margin: 0; font-size: 21px; }
 .modal-close { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #dce2e5; border-radius: 8px; background: #fff; color: #53616a; font-size: 20px; cursor: pointer; }
 .entry-modal form { padding: 20px 22px; }
-.type-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 17px; padding: 4px; border-radius: 10px; background: #eef1f2; }
+.type-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-bottom: 17px; padding: 4px; border-radius: 10px; background: #eef1f2; }
 .type-switch button { min-height: 38px; border: 0; border-radius: 7px; background: transparent; color: #68747b; font-weight: 700; cursor: pointer; }
 .type-switch button.active { background: #fff; color: #315f78; box-shadow: 0 1px 3px rgba(30, 43, 50, .1); }
 .entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -279,4 +279,5 @@ select {
   .entry-grid { grid-template-columns: 1fr; }
   .entry-grid .full-field { grid-column: auto; }
   .entry-modal-head, .entry-modal form { padding-inline: 16px; }
+  .type-switch button { padding-inline: 6px; font-size: 12px; }
 }

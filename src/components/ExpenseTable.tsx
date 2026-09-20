@@ -5,9 +5,10 @@ import type { Expense } from '../lib/types'
 type Props = {
   expenses: Expense[]
   selectedMonth: string
+  onEdit?: (expense: Expense) => void
 }
 
-export function ExpenseTable({ expenses, selectedMonth }: Props) {
+export function ExpenseTable({ expenses, selectedMonth, onEdit }: Props) {
   const pageSize = 50
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -113,6 +114,7 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
               <th className="px-4 py-3">カテゴリ</th>
               <th className="px-4 py-3">支払者</th>
               <th className="px-4 py-3">内容</th>
+              {onEdit && <th className="px-4 py-3 text-right">操作</th>}
             </tr>
           </thead>
           <tbody>
@@ -132,6 +134,18 @@ export function ExpenseTable({ expenses, selectedMonth }: Props) {
                     <p className="mt-0.5 max-w-xl truncate text-xs text-slate-500" title={expense.memo}>{expense.memo}</p>
                   )}
                 </td>
+                {onEdit && (
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+                      aria-label={`${expense.title}を編集`}
+                      onClick={() => onEdit(expense)}
+                    >
+                      編集
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

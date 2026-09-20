@@ -82,6 +82,60 @@ export async function insertSupabaseRow(
   }
 }
 
+export function supabaseEq(value: string): string {
+  return `eq."${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
+export async function updateSupabaseRow(
+  env: SupabaseEnv,
+  table: SupabaseTable,
+  select: string,
+  filters: URLSearchParams,
+  body: unknown,
+): Promise<Response> {
+  const rawUrl = env.SUPABASE_URL?.trim()
+  const secretKey = env.SUPABASE_SECRET_KEY?.trim()
+  if (!rawUrl || !secretKey) return jsonResponse({ error: 'サーバーのDB接続設定が未完了です。' }, 503)
+
+  let endpoint: URL
+  try {
+    endpoint = new URL(`/rest/v1/${table}`, rawUrl)
+  } catch {
+    return jsonResponse({ error: 'サーバーのDB接続先が正しくありません。' }, 503)
+  }
+  if (endpoint.protocol !== 'https:') return jsonResponse({ error: 'サーバーのDB接続先はHTTPSである必要があります。' }, 503)
+  endpoint.search = filters.toString()
+  endpoint.searchParams.set('select', select)
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'PATCH',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+        apikey: secretKey,
+      },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      console.error(`Supabase ${table} update failed with status ${response.status}`)
+      return jsonResponse({ error: 'DBの更新に失敗しました。' }, 502)
+    }
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) {
+      console.error(`Supabase ${table} update returned an unexpected response`)
+      return jsonResponse({ error: '更新結果を確認できませんでした。' }, 502)
+    }
+    if (rows.length === 0) return jsonResponse({ error: '別の画面で更新されています。最新データを再読み込みしてください。' }, 409)
+    if (rows.length !== 1) return jsonResponse({ error: '更新対象を一意に確認できませんでした。' }, 409)
+    return jsonResponse(rows[0])
+  } catch (error) {
+    console.error(`Supabase ${table} update failed`, error instanceof Error ? error.message : 'unknown error')
+    return jsonResponse({ error: 'DBへの接続中にエラーが発生しました。' }, 502)
+  }
+}
+
 function parseNonNegativeInteger(value: string | null): number | null {
   if (value === null || !/^\d+$/.test(value)) return null
   const parsed = Number(value)
