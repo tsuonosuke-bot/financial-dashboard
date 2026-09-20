@@ -31,3 +31,21 @@ test('予算カテゴリを受け入れる', () => {
   const category = { id: 1, name: '10_食費', notion_url: null }
   assert.deepEqual(parseBudgetCategory(category), category)
 })
+
+test('categoryが欠けた明細は未分類として受け入れる', () => {
+  const base = {
+    id: 5540,
+    transaction_date: '2026-08-23',
+    amount: 2448,
+    title: 'AMAZON.CO.JP',
+    payer: '共同',
+    memo: '楽天カードCSV自動インポート',
+    notion_url: null,
+    notion_created_at: null,
+    created_at: '2026-09-19T11:28:36Z',
+  }
+  assert.equal(parseExpense({ ...base, category: null }).category, '97_未分類')
+  assert.equal(parseExpense({ ...base, category: '  ' }).category, '97_未分類')
+  assert.equal(parseExpense(base).category, '97_未分類')
+  assert.throws(() => parseExpense({ ...base, category: 5 }), /category/)
+})

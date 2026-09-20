@@ -1,5 +1,8 @@
 import type { BudgetCategory, Expense } from './types'
 
+/** APIからcategoryが欠けて届いた明細に充てる代替カテゴリ。 */
+export const UNCLASSIFIED_CATEGORY = '97_未分類'
+
 type PageEnvelope = {
   items: unknown[]
   total: number | null
@@ -23,6 +26,14 @@ function stringValue(record: Record<string, unknown>, field: string, entity: str
 function nullableStringValue(record: Record<string, unknown>, field: string, entity: string): string | null {
   const value = record[field]
   return value === null || typeof value === 'string' ? value : fail(entity, field)
+}
+
+function categoryValue(record: Record<string, unknown>, entity: string): string {
+  const value = record.category
+  // categoryはDB上NULLを許すため、欠けていても一覧全体を落とさず未分類として扱う。
+  if (value === null || value === undefined) return UNCLASSIFIED_CATEGORY
+  if (typeof value !== 'string') return fail(entity, 'category')
+  return value.trim() || UNCLASSIFIED_CATEGORY
 }
 
 function numberValue(record: Record<string, unknown>, field: string, entity: string): number {
@@ -49,7 +60,7 @@ export function parseExpense(value: unknown): Expense {
     transaction_date: transactionDate,
     amount: numberValue(value, 'amount', entity),
     title: stringValue(value, 'title', entity),
-    category: stringValue(value, 'category', entity),
+    category: categoryValue(value, entity),
     payer: nullableStringValue(value, 'payer', entity),
     memo: nullableStringValue(value, 'memo', entity),
     notion_url: nullableStringValue(value, 'notion_url', entity),
