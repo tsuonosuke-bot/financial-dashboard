@@ -11,6 +11,8 @@ import {
   filterExpensesByPayer,
   monthKey,
   monthLabel,
+  summarizeUnclassified,
+  UNCLASSIFIED_CATEGORY,
   type CategoryFilterMode,
 } from './lib/finance'
 import type { Expense, ExpenseDraft } from './lib/types'
@@ -67,6 +69,10 @@ function App() {
     ),
     [expenses, selectedCategories, categoryMode, selectedPayer],
   )
+  const unclassified = useMemo(() => summarizeUnclassified(expenses), [expenses])
+  const unclassifiedMonthNote = unclassified.months.length > 1
+    ? `${monthLabel(unclassified.months[0])} ほか${unclassified.months.length - 1}ヶ月`
+    : unclassified.months.map(monthLabel).join('')
   const selectedMonthIndex = availableMonths.indexOf(selectedMonth)
   const newestTransaction = expenses.reduce(
     (latest, expense) => expense.transaction_date > latest ? expense.transaction_date : latest,
@@ -92,6 +98,14 @@ function App() {
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : '家計簿を保存できませんでした。')
     }
+  }
+
+  // 未分類だけを一覧・グラフに残し、明細が最も新しい月へ移動する。
+  const focusUnclassified = () => {
+    setRequestedCategories([UNCLASSIFIED_CATEGORY])
+    setCategoryMode('include')
+    setRequestedPayer('')
+    if (unclassified.months.length > 0) setRequestedMonth(unclassified.months[0])
   }
 
   const toggleCategory = (category: string) => {
@@ -158,6 +172,17 @@ function App() {
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 デモモードです。Supabaseの実データは読み込んでいません。
               </div>
+            )}
+            {unclassified.count > 0 && (
+              <button type="button" className="unclassified-alert" onClick={focusUnclassified}>
+                <span className="unclassified-alert-body">
+                  <span className="unclassified-alert-title">
+                    未分類の明細が{unclassified.count.toLocaleString('ja-JP')}件あります
+                  </span>
+                  <span className="unclassified-alert-note">対象月: {unclassifiedMonthNote || '—'}</span>
+                </span>
+                <span className="unclassified-alert-action" aria-hidden="true">絞り込む →</span>
+              </button>
             )}
             <section className="month-toolbar" aria-label="表示条件の選択">
               <div className="filter-intro">
