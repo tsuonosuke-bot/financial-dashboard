@@ -170,7 +170,6 @@ select {
 .page-heading > p:last-child { margin: 3px 0 0; color: #6c7780; font-size: 11px; }
 .header-actions { display: flex; align-items: center; gap: 7px; }
 .app-main { width: min(1240px, calc(100% - 32px)); margin: 0 auto; padding: 20px 0 52px; }
-/* minmax(0,1fr)にしないと、明細テーブルの最小幅で画面全体が横に伸びる。 */
 .dashboard-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .summary-grid { gap: 12px; }
 .filter-intro-title { display: flex; align-items: baseline; gap: 9px; }
@@ -260,7 +259,9 @@ select {
   .page-heading > p { display: none; }
   .page-heading h1 { font-size: 18px; }
   .header-actions { gap: 5px; }
-  .header-actions > div, .refresh-button span:not([aria-hidden]), .add-button { font-size: 0; }
+  .header-actions > div, .add-button { font-size: 0; }
+  .refresh-button span:not([aria-hidden]) { display: none; }
+  .refresh-button { gap: 0; }
   .add-button { width: 40px; padding: 0; }
   .add-button::after { content: "+"; font-size: 20px; }
   .hub-button, .refresh-button { min-height: 38px; padding-inline: 10px; }

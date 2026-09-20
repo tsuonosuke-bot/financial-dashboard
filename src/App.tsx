@@ -129,9 +129,9 @@ function App() {
                 <p>最新取引 {newestTransaction || '—'}</p>
               </div>
             )}
-            <button type="button" onClick={reload} disabled={loading} className="refresh-button">
+            <button type="button" onClick={reload} disabled={loading} aria-label="再読み込み" className="refresh-button">
               <span aria-hidden="true">↻</span>
-              {loading ? '更新中' : '再読み込み'}
+              <span>{loading ? '更新中' : '再読み込み'}</span>
             </button>
             <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEntryOpen(true) }} disabled={loading || demoMode}>
               ＋ 家計簿を記録
