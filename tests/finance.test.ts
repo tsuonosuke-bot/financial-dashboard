@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { CATEGORY_COLORS, categoryColor } from '../src/lib/chartColors.ts'
-import { buildMonthlyTrendData, filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, isIncome, isSpending, summarizeMonth } from '../src/lib/finance.ts'
+import { buildMonthlyTrendData, filterExpensesByCategories, filterExpensesByCategory, filterExpensesByPayer, isIncome, isSpending, summarizeMonth, summarizeUnclassified } from '../src/lib/finance.ts'
 import type { Expense } from '../src/lib/types.ts'
 
 const expenses: Expense[] = [
@@ -177,4 +177,18 @@ test('収支前月比は各月の収入と支出の差を比較する', () => {
   assert.equal(summary.previousMonthIncome, 500000)
   assert.equal(summary.previousMonthBalance, 495000)
   assert.equal(summary.balanceDiff, 100800)
+})
+
+test('未分類の明細の件数と該当月を新しい順に集計する', () => {
+  const unclassified = (id: number, transactionDate: string, category: string): Expense => ({
+    ...expenses[0], id, transaction_date: transactionDate, category,
+  })
+  const rows = [
+    unclassified(11, '2026-08-23', '97_未分類'),
+    unclassified(12, '2026-08-10', '97_未分類'),
+    unclassified(13, '2026-07-02', '97_未分類'),
+    unclassified(14, '2026-08-15', '01_食費'),
+  ]
+  assert.deepEqual(summarizeUnclassified(rows), { count: 3, months: ['2026-08', '2026-07'] })
+  assert.deepEqual(summarizeUnclassified(expenses), { count: 0, months: [] })
 })

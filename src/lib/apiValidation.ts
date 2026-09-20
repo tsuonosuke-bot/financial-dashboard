@@ -1,7 +1,5 @@
+import { UNCLASSIFIED_CATEGORY } from './finance.ts'
 import type { BudgetCategory, Expense } from './types'
-
-/** APIからcategoryが欠けて届いた明細に充てる代替カテゴリ。 */
-export const UNCLASSIFIED_CATEGORY = '97_未分類'
 
 type PageEnvelope = {
   items: unknown[]

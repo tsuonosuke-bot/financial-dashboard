@@ -134,6 +134,26 @@ select {
   @apply rounded-lg px-3 py-1.5 text-xs font-bold text-indigo-700 transition hover:bg-indigo-50;
 }
 
+.unclassified-alert {
+  @apply flex w-full items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left transition hover:border-amber-400 hover:bg-amber-100;
+}
+
+.unclassified-alert-body {
+  @apply grid gap-0.5;
+}
+
+.unclassified-alert-title {
+  @apply text-sm font-semibold text-amber-900;
+}
+
+.unclassified-alert-note {
+  @apply text-xs text-amber-800;
+}
+
+.unclassified-alert-action {
+  @apply shrink-0 text-xs font-bold text-amber-900;
+}
+
 .pagination-button {
   @apply rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40;
 }
@@ -150,7 +170,8 @@ select {
 .page-heading > p:last-child { margin: 3px 0 0; color: #6c7780; font-size: 11px; }
 .header-actions { display: flex; align-items: center; gap: 7px; }
 .app-main { width: min(1240px, calc(100% - 32px)); margin: 0 auto; padding: 20px 0 52px; }
-.dashboard-stack { display: grid; gap: 16px; }
+/* minmax(0,1fr)にしないと、明細テーブルの最小幅で画面全体が横に伸びる。 */
+.dashboard-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .summary-grid { gap: 12px; }
 .filter-intro-title { display: flex; align-items: baseline; gap: 9px; }
 .filter-intro-title .eyebrow, .filter-intro-title p { margin-block: 0; }

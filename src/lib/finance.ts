@@ -40,6 +40,21 @@ export function isSpending(expense: Expense) {
   return amountOf(expense) !== 0 && !isIncome(expense)
 }
 
+/** categoryが欠けた明細に充てる代替カテゴリ。 */
+export const UNCLASSIFIED_CATEGORY = '97_未分類'
+
+/** 未分類の明細の件数と、それが含まれる月を新しい順に返す。 */
+export function summarizeUnclassified(expenses: Expense[]) {
+  const months = new Set<string>()
+  let count = 0
+  for (const expense of expenses) {
+    if (expense.category !== UNCLASSIFIED_CATEGORY) continue
+    count += 1
+    months.add(monthKey(expense.transaction_date))
+  }
+  return { count, months: Array.from(months).sort().reverse() }
+}
+
 export function categoryLabel(category: string) {
   return category.replace(/^\d+_/, '')
 }
