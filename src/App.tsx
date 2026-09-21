@@ -118,24 +118,32 @@ function App() {
     <div className="app-page">
       <header className="app-header">
         <div className="app-header-inner">
-          <div className="page-heading">
-            <p className="eyebrow">Personal finance</p>
-            <h1>家計簿</h1>
-            <p>日々のお金の流れを確認・記録</p>
+          <div className="dashboard-brand">
+            <span className="dashboard-brand-mark" aria-hidden="true">¥</span>
+            <span>
+              <h1>Finance</h1>
+              <small>日々のお金の流れを確認・記録</small>
+            </span>
           </div>
           <div className="header-actions">
             <a className="hub-button" href="https://personal-dashboard-7md.pages.dev/">
               ← Hub
             </a>
-            {!loading && !error && (
-              <div className="hidden text-right text-xs text-slate-500 sm:block">
-                <p>{demoMode ? 'デモデータ' : `${expenses.length.toLocaleString('ja-JP')}件`} · {categories.length}カテゴリ</p>
-                <p>最新取引 {newestTransaction || '—'}</p>
-              </div>
-            )}
+            <details className="dashboard-switcher">
+              <summary>Dashboards</summary>
+              <nav aria-label="ダッシュボードを切り替え">
+                <a href="https://personal-dashboard-7md.pages.dev/compass/">Idea</a>
+                <a href="https://personal-dashboard-7md.pages.dev/writing/">Writing</a>
+                <a href="https://personal-dashboard-7md.pages.dev/habits/">Habits</a>
+                <span aria-current="page">Finance</span>
+                <a href="https://personal-dashboard-7md.pages.dev/go/knowledge">Knowledge</a>
+              </nav>
+            </details>
+            <span className={`source-badge ${error ? 'error' : loading ? 'loading' : demoMode ? 'demo' : 'live'}`}>
+              {error ? '取得失敗' : loading ? '接続確認中' : demoMode ? 'DEMO DATA' : 'SUPABASE LIVE'}
+            </span>
             <button type="button" onClick={reload} disabled={loading} aria-label="再読み込み" className="refresh-button">
               <span aria-hidden="true">↻</span>
-              <span>{loading ? '更新中' : '再読み込み'}</span>
             </button>
             <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEditingExpense(null); setEntryOpen(true) }} disabled={loading || demoMode}>
               ＋ 家計簿を記録
@@ -145,6 +153,12 @@ function App() {
       </header>
 
       <main className="app-main">
+        {!loading && !error && (
+          <div className="page-meta" aria-label="Financeデータの概要">
+            <span>{demoMode ? 'デモデータ' : `${expenses.length.toLocaleString('ja-JP')}件`} · {categories.length}カテゴリ</span>
+            <span>最新取引 {newestTransaction || '—'}</span>
+          </div>
+        )}
         {notice && <div className="save-notice" role="status"><span>{notice}</span><button type="button" aria-label="閉じる" onClick={() => setNotice(null)}>×</button></div>}
         {loading && (
           <div className="panel grid min-h-64 place-items-center">
