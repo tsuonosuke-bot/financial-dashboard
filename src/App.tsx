@@ -1,7 +1,8 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { CategoryFilter } from './components/CategoryFilter'
 import { ExpenseFormModal } from './components/ExpenseFormModal'
 import { ExpenseTable } from './components/ExpenseTable'
+import { RecurringExpenseModal } from './components/RecurringExpenseModal'
 import { SummaryCards } from './components/SummaryCards'
 import { useExpenses } from './hooks/useExpenses'
 import {
@@ -15,7 +16,8 @@ import {
   UNCLASSIFIED_CATEGORY,
   type CategoryFilterMode,
 } from './lib/finance'
-import type { Expense, ExpenseDraft } from './lib/types'
+import { createRecurringExpense, getRecurringExpenses, runRecurringExpenses, setRecurringExpenseActive, updateRecurringExpense } from './lib/api'
+import type { Expense, ExpenseDraft, RecurringExpense, RecurringExpenseDraft, RecurringExpenseUpdate } from './lib/types'
 
 const MonthlyTrendChart = lazy(() => import('./components/MonthlyTrendChart').then((module) => ({ default: module.MonthlyTrendChart })))
 const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then((module) => ({ default: module.CategoryPieChart })))
@@ -30,6 +32,20 @@ function App() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [recurringOpen, setRecurringOpen] = useState(() => new URLSearchParams(window.location.search).get('view') === 'recurring')
+  const [recurringRules, setRecurringRules] = useState<RecurringExpense[]>([])
+  const [recurringBusy, setRecurringBusy] = useState(false)
+  const [recurringError, setRecurringError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (demoMode) return
+    void getRecurringExpenses().then(setRecurringRules).catch(() => { /* migration前は通常画面を妨げない */ })
+  }, [demoMode])
+  useEffect(() => {
+    const syncView = () => setRecurringOpen(new URLSearchParams(window.location.search).get('view') === 'recurring')
+    window.addEventListener('popstate', syncView)
+    return () => window.removeEventListener('popstate', syncView)
+  }, [])
   const availableMonths = useMemo(
     () => Array.from(new Set(expenses.map((expense) => monthKey(expense.transaction_date)))).sort().reverse(),
     [expenses],
@@ -114,6 +130,63 @@ function App() {
       : [...current, category])
   }
 
+  const addRecurring = async (draft: RecurringExpenseDraft) => {
+    setRecurringBusy(true); setRecurringError(null)
+    try {
+      const created = await createRecurringExpense(draft)
+      setRecurringRules((current) => [...current, created])
+      setNotice('定期登録ルールを追加しました。')
+    } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を追加できませんでした。') }
+    finally { setRecurringBusy(false) }
+  }
+
+  const toggleRecurring = async (rule: RecurringExpense) => {
+    setRecurringBusy(true); setRecurringError(null)
+    try {
+      const updated = await setRecurringExpenseActive(rule.id, !rule.active)
+      setRecurringRules((current) => current.map((item) => item.id === updated.id ? updated : item))
+    } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を更新できませんでした。') }
+    finally { setRecurringBusy(false) }
+  }
+
+  const editRecurring = async (draft: RecurringExpenseUpdate) => {
+    setRecurringBusy(true); setRecurringError(null)
+    try {
+      const updated = await updateRecurringExpense(draft)
+      setRecurringRules((current) => current.map((item) => item.id === updated.id ? updated : item))
+      setNotice('定期登録ルールを更新しました。')
+      return true
+    } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を更新できませんでした。'); return false }
+    finally { setRecurringBusy(false) }
+  }
+
+  const openRecurring = () => {
+    setRecurringError(null)
+    setRecurringOpen(true)
+    const url = new URL(window.location.href)
+    url.searchParams.set('view', 'recurring')
+    window.history.pushState(null, '', url)
+  }
+
+  const closeRecurring = () => {
+    if (recurringBusy) return
+    setRecurringOpen(false)
+    const url = new URL(window.location.href)
+    url.searchParams.delete('view')
+    window.history.replaceState(null, '', url)
+  }
+
+  const runRecurring = async () => {
+    setRecurringBusy(true); setRecurringError(null)
+    try {
+      const generated = await runRecurringExpenses()
+      setRecurringRules(await getRecurringExpenses())
+      reload()
+      setNotice(generated > 0 ? `${generated}件の定期明細を登録しました。` : '登録が必要な定期明細はありませんでした。')
+    } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を実行できませんでした。') }
+    finally { setRecurringBusy(false) }
+  }
+
   return (
     <div className="app-page">
       <header className="app-header">
@@ -144,6 +217,9 @@ function App() {
             </span>
             <button type="button" onClick={reload} disabled={loading} aria-label="再読み込み" className="refresh-button">
               <span aria-hidden="true">↻</span>
+            </button>
+            <button type="button" className="secondary-button recurring-button" onClick={openRecurring} disabled={loading || demoMode}>
+              ↻ 定期登録
             </button>
             <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEditingExpense(null); setEntryOpen(true) }} disabled={loading || demoMode}>
               ＋ 家計簿を記録
@@ -320,6 +396,20 @@ function App() {
           expense={editingExpense ?? undefined}
           onClose={closeEntry}
           onSave={(draft) => void saveExpense(draft)}
+        />
+      )}
+      {recurringOpen && (
+        <RecurringExpenseModal
+          expenses={expenses}
+          categories={categories}
+          rules={recurringRules}
+          busy={recurringBusy}
+          error={recurringError}
+          onClose={closeRecurring}
+          onCreate={addRecurring}
+          onUpdate={editRecurring}
+          onToggle={(rule) => void toggleRecurring(rule)}
+          onRun={() => void runRecurring()}
         />
       )}
     </div>

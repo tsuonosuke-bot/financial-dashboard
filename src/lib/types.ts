@@ -30,3 +30,45 @@ export type ExpenseDraft = {
 export type ExpenseSnapshot = Pick<Expense,
   'transaction_date' | 'amount' | 'title' | 'category' | 'payer' | 'memo'
 >
+
+export type RecurringFrequency = 'daily' | 'weekly' | 'monthly'
+
+export type RecurringExpense = {
+  id: number
+  source_expense_id: number
+  frequency: RecurringFrequency
+  interval_count: number
+  day_of_month: number
+  start_date: string
+  end_date: string | null
+  next_run_date: string
+  active: boolean
+  amount: number
+  title: string
+  category: string
+  payer: string | null
+  memo: string | null
+  last_generated_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type RecurringExpenseDraft = {
+  source_expense_id: number
+  frequency: RecurringFrequency
+  interval_count: number
+  end_date: string | null
+}
+
+export type RecurringExpenseUpdate = {
+  id: number
+  frequency: RecurringFrequency
+  interval_count: number
+  end_date: string | null
+  amount: number
+  title: string
+  category: string
+  payer: string | null
+  memo: string | null
+  type: 'expense' | 'income' | 'offset'
+}

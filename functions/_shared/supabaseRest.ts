@@ -3,7 +3,7 @@ export interface SupabaseEnv {
   SUPABASE_SECRET_KEY?: string
 }
 
-export type SupabaseTable = 'expenses' | 'budget_categories'
+export type SupabaseTable = 'expenses' | 'budget_categories' | 'recurring_expenses'
 
 type QueryDefinition = {
   table: SupabaseTable

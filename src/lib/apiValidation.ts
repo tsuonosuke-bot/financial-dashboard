@@ -1,5 +1,5 @@
 import { UNCLASSIFIED_CATEGORY } from './finance.ts'
-import type { BudgetCategory, Expense } from './types'
+import type { BudgetCategory, Expense, RecurringExpense } from './types'
 
 type PageEnvelope = {
   items: unknown[]
@@ -39,6 +39,11 @@ function numberValue(record: Record<string, unknown>, field: string, entity: str
   return typeof value === 'number' && Number.isFinite(value) ? value : fail(entity, field)
 }
 
+function booleanValue(record: Record<string, unknown>, field: string, entity: string): boolean {
+  const value = record[field]
+  return typeof value === 'boolean' ? value : fail(entity, field)
+}
+
 export function parsePageEnvelope(value: unknown): PageEnvelope {
   if (!isRecord(value) || !Array.isArray(value.items)) return fail('ページ応答')
   const { total, limit, offset } = value
@@ -74,5 +79,31 @@ export function parseBudgetCategory(value: unknown): BudgetCategory {
     id: numberValue(value, 'id', entity),
     name: stringValue(value, 'name', entity),
     notion_url: nullableStringValue(value, 'notion_url', entity),
+  }
+}
+
+export function parseRecurringExpense(value: unknown): RecurringExpense {
+  const entity = '定期登録'
+  if (!isRecord(value)) return fail(entity)
+  const frequency = stringValue(value, 'frequency', entity)
+  if (frequency !== 'daily' && frequency !== 'weekly' && frequency !== 'monthly') return fail(entity, 'frequency')
+  return {
+    id: numberValue(value, 'id', entity),
+    source_expense_id: numberValue(value, 'source_expense_id', entity),
+    frequency,
+    interval_count: numberValue(value, 'interval_count', entity),
+    day_of_month: numberValue(value, 'day_of_month', entity),
+    start_date: stringValue(value, 'start_date', entity),
+    end_date: nullableStringValue(value, 'end_date', entity),
+    next_run_date: stringValue(value, 'next_run_date', entity),
+    active: booleanValue(value, 'active', entity),
+    amount: numberValue(value, 'amount', entity),
+    title: stringValue(value, 'title', entity),
+    category: stringValue(value, 'category', entity),
+    payer: nullableStringValue(value, 'payer', entity),
+    memo: nullableStringValue(value, 'memo', entity),
+    last_generated_at: nullableStringValue(value, 'last_generated_at', entity),
+    created_at: stringValue(value, 'created_at', entity),
+    updated_at: stringValue(value, 'updated_at', entity),
   }
 }

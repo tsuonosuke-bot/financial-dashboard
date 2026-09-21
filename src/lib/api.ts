@@ -1,5 +1,5 @@
-import type { BudgetCategory, Expense, ExpenseDraft, ExpenseSnapshot } from './types'
-import { parseBudgetCategory, parseExpense, parsePageEnvelope } from './apiValidation'
+import type { BudgetCategory, Expense, ExpenseDraft, ExpenseSnapshot, RecurringExpense, RecurringExpenseDraft, RecurringExpenseUpdate } from './types'
+import { parseBudgetCategory, parseExpense, parsePageEnvelope, parseRecurringExpense } from './apiValidation'
 
 type ErrorBody = { error?: unknown }
 
@@ -50,6 +50,49 @@ export function getExpenses(): Promise<Expense[]> {
 
 export function getBudgetCategories(): Promise<BudgetCategory[]> {
   return getAllPages('/api/budget-categories', parseBudgetCategory)
+}
+
+export function getRecurringExpenses(): Promise<RecurringExpense[]> {
+  return getAllPages('/api/recurring-expenses', parseRecurringExpense)
+}
+
+export async function createRecurringExpense(input: RecurringExpenseDraft): Promise<RecurringExpense> {
+  const data = await requestJson('/api/recurring-expenses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Dashboard-Action': 'recurring-create' },
+    body: JSON.stringify(input),
+  })
+  return parseRecurringExpense(data)
+}
+
+export async function setRecurringExpenseActive(id: number, active: boolean): Promise<RecurringExpense> {
+  const data = await requestJson('/api/recurring-expenses', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Dashboard-Action': 'recurring-update' },
+    body: JSON.stringify({ id, active }),
+  })
+  return parseRecurringExpense(data)
+}
+
+export async function updateRecurringExpense(input: RecurringExpenseUpdate): Promise<RecurringExpense> {
+  const data = await requestJson('/api/recurring-expenses', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Dashboard-Action': 'recurring-edit' },
+    body: JSON.stringify(input),
+  })
+  return parseRecurringExpense(data)
+}
+
+export async function runRecurringExpenses(): Promise<number> {
+  const data = await requestJson('/api/recurring-expenses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Dashboard-Action': 'recurring-run' },
+    body: '{}',
+  })
+  if (typeof data !== 'object' || data === null || !('generated' in data) || !Number.isSafeInteger(data.generated)) {
+    throw new Error('定期登録の実行結果が正しくありません。')
+  }
+  return data.generated as number
 }
 
 export async function createExpense(input: ExpenseDraft): Promise<Expense> {
