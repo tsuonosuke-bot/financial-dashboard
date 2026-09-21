@@ -218,8 +218,12 @@ function App() {
             <button type="button" onClick={reload} disabled={loading} aria-label="再読み込み" className="refresh-button">
               <span aria-hidden="true">↻</span>
             </button>
-            <button type="button" className="secondary-button recurring-button" onClick={openRecurring} disabled={loading || demoMode}>
-              ↻ 定期登録
+            <button type="button" className="secondary-button recurring-button" onClick={openRecurring} disabled={loading || demoMode} aria-label="定期登録を管理">
+              <svg className="recurring-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <path d="M8 2v4M16 2v4M3 9h18M8 14a4 4 0 0 1 6.5-1.1L16 14M16 11v3h-3M16 17a4 4 0 0 1-6.5 1.1L8 17M8 20v-3h3" />
+              </svg>
+              <span>定期登録</span>
             </button>
             <button type="button" className="primary-button add-button" onClick={() => { setActionError(null); setEditingExpense(null); setEntryOpen(true) }} disabled={loading || demoMode}>
               ＋ 家計簿を記録

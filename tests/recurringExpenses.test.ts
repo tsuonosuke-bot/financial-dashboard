@@ -51,11 +51,17 @@ test('SQLは生成履歴の一意制約と月次基準日と日次Cronを持つ'
 })
 
 test('家計簿画面から定期登録管理画面を開き、内容を編集できる', async () => {
-  const [app, manager] = await Promise.all([
+  const [app, manager, styles] = await Promise.all([
     readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/RecurringExpenseModal.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/index.css', import.meta.url), 'utf8'),
   ])
-  assert.match(app, /↻ 定期登録/)
+  assert.match(app, /aria-label="定期登録を管理"/)
+  assert.match(app, /className="recurring-icon"/)
+  assert.doesNotMatch(app, /↻ 定期登録/)
+  assert.doesNotMatch(styles, /\.recurring-button::after\s*\{[^}]*↻/)
+  assert.match(styles, /\.recurring-button\s*\{[^}]*background: #f3f0ff/)
+  assert.match(styles, /@media \(max-width: 640px\)[\s\S]*\.recurring-button\s*\{[^}]*background: #59449b/)
   assert.match(app, /view.*recurring/)
   assert.match(manager, /定期登録を管理/)
   assert.match(manager, /変更を保存/)
