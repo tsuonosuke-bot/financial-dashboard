@@ -136,7 +136,8 @@ function App() {
       const created = await createRecurringExpense(draft)
       setRecurringRules((current) => [...current, created])
       setNotice('定期登録ルールを追加しました。')
-    } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を追加できませんでした。') }
+      return true
+    } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を追加できませんでした。'); return false }
     finally { setRecurringBusy(false) }
   }
 
@@ -410,7 +411,6 @@ function App() {
       )}
       {recurringOpen && (
         <RecurringExpenseModal
-          expenses={expenses}
           categories={categories}
           rules={recurringRules}
           busy={recurringBusy}

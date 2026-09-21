@@ -280,6 +280,7 @@ select {
 .recurring-rule span, .recurring-rule small { color: #758089; font-size: 11px; }
 .recurring-rule button { min-width: 66px; padding: 6px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; cursor: pointer; }
 .recurring-rule-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+.rule-copy { border: 1px solid #d1c5f0; background: #f6f3ff; color: #59449b; }
 .rule-edit { border: 1px solid #bfd0d8; background: #fff; color: #315f78; }
 .rule-active { border: 1px solid #abd4c0; background: #eaf6f0; color: #276046; }
 .rule-paused { border: 1px solid #d7dde0; background: #f1f3f4; color: #68747b; }

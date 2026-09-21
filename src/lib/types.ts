@@ -35,7 +35,8 @@ export type RecurringFrequency = 'daily' | 'weekly' | 'monthly'
 
 export type RecurringExpense = {
   id: number
-  source_expense_id: number
+  source_expense_id: number | null
+  template_rule_id: number | null
   frequency: RecurringFrequency
   interval_count: number
   day_of_month: number
@@ -54,10 +55,17 @@ export type RecurringExpense = {
 }
 
 export type RecurringExpenseDraft = {
-  source_expense_id: number
+  template_rule_id: number
+  start_date: string
   frequency: RecurringFrequency
   interval_count: number
   end_date: string | null
+  amount: number
+  title: string
+  category: string
+  payer: string | null
+  memo: string | null
+  type: 'expense' | 'income' | 'offset'
 }
 
 export type RecurringExpenseUpdate = {

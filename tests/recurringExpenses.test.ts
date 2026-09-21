@@ -18,9 +18,34 @@ test('定期登録APIはサーバー側の固定列だけを取得する', async
 })
 
 test('定期登録の作成は同一オリジンと専用ヘッダーを要求する', async () => {
-  const body = JSON.stringify({ source_expense_id: 1, frequency: 'monthly', interval_count: 1, end_date: null })
+  const body = JSON.stringify({ template_rule_id: 1, start_date: '2026-10-01', frequency: 'monthly', interval_count: 1, end_date: null, amount: 1000, title: '家賃', category: '住居費', payer: null, memo: null, type: 'expense' })
   const rejected = await recurringRoute({ request: new Request('https://dashboard.example/api/recurring-expenses', { method: 'POST', headers: { Origin: 'https://evil.example', 'Content-Type': 'application/json', 'X-Dashboard-Action': 'recurring-create' }, body }), env })
   assert.equal(rejected.status, 403)
+})
+
+test('定期登録の作成は既存ルールをテンプレートにして初回生成日を渡す', async () => {
+  const originalFetch = globalThis.fetch
+  let url = ''
+  let rpcBody: Record<string, unknown> = {}
+  globalThis.fetch = async (input, init) => {
+    url = String(input)
+    rpcBody = JSON.parse(String(init?.body)) as Record<string, unknown>
+    return Response.json([{ id: 2, template_rule_id: 1 }])
+  }
+  try {
+    const body = JSON.stringify({ template_rule_id: 1, start_date: '2026-10-01', frequency: 'monthly', interval_count: 1, end_date: null, amount: 120000, title: '家賃', category: '20_住居費', payer: '本人', memo: null, type: 'expense' })
+    const response = await recurringRoute({ request: new Request('https://dashboard.example/api/recurring-expenses', {
+      method: 'POST',
+      headers: { Origin: 'https://dashboard.example', 'Content-Type': 'application/json', 'X-Dashboard-Action': 'recurring-create' },
+      body,
+    }), env })
+    assert.equal(response.status, 201)
+    assert.match(url, /rpc\/create_recurring_expense_rule/)
+    assert.equal(rpcBody.p_template_rule_id, 1)
+    assert.equal(rpcBody.p_start_date, '2026-10-01')
+    assert.equal(rpcBody.p_amount, 120000)
+    assert.equal('p_source_expense_id' in rpcBody, false)
+  } finally { globalThis.fetch = originalFetch }
 })
 
 test('再開は専用DB関数を使い、停止期間を遡及登録しない', async () => {
@@ -45,6 +70,9 @@ test('SQLは生成履歴の一意制約と月次基準日と日次Cronを持つ'
   const sql = await readFile(new URL('../supabase/recurring-expenses.sql', import.meta.url), 'utf8')
   assert.match(sql, /primary key \(rule_id, scheduled_for\)/)
   assert.match(sql, /p_day_of_month/)
+  assert.match(sql, /template_rule_id/)
+  assert.match(sql, /alter column source_expense_id drop not null/)
+  assert.match(sql, /p_start_date, p_end_date, p_start_date/)
   assert.match(sql, /materialize-recurring-expenses-jst/)
   assert.match(sql, /'10 15 \* \* \*'/)
   assert.match(sql, /while candidate <= today_jst/)
@@ -65,6 +93,9 @@ test('家計簿画面から定期登録管理画面を開き、内容を編集�
   assert.match(app, /view.*recurring/)
   assert.match(manager, /定期登録を管理/)
   assert.match(manager, /変更を保存/)
+  assert.match(manager, /複製して追加/)
+  assert.match(manager, /開始日（初回生成日）/)
+  assert.doesNotMatch(manager, /9月1日|09-01|septemberFirst/)
   assert.match(manager, /次回/)
   assert.match(manager, /最終生成/)
 })

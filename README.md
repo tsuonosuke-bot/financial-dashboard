@@ -65,7 +65,7 @@ npm run preview   # ビルド成果物のプレビュー
 - 選択月の収支明細（検索・期間・収支種別・金額範囲・並び順フィルター）
 - 支出・収入・支出相殺の新規登録
 - 既存明細の編集（他画面で変更されたレコードは競合として停止）
-- 9月1日の既存明細を元にした日次・週次・月次の定期登録ルール管理
+- 既存の定期登録ルールをテンプレートとして複製・編集できる、日次・週次・月次の定期登録ルール管理
 - Supabase Cronによる毎日0:10（JST）の自動生成と、画面からの手動反映
 - `budget_categories` をカテゴリマスターとして使用
 
@@ -86,7 +86,7 @@ Supabaseプロジェクト `plwlxwidpqbunugfxjhp` の次のテーブルを参照
 - `GET /api/budget-categories`
 - `GET / POST / PATCH /api/recurring-expenses`
 
-定期登録を使う前に、Supabase SQL Editorで `supabase/recurring-expenses.sql` を一度実行します。
+定期登録を使う前、および定期登録の仕様更新後は、Supabase SQL Editorで `supabase/recurring-expenses.sql` を実行します。
 生成履歴には `(ルール, 予定日)` の一意制約があり、Cronと手動反映が重なっても同じ明細は二重登録されません。
 
 APIは取得列、並び順、対象テーブル、1回あたり最大1,000件をサーバー側で固定しています。

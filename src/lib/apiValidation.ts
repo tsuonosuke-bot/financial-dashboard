@@ -39,6 +39,11 @@ function numberValue(record: Record<string, unknown>, field: string, entity: str
   return typeof value === 'number' && Number.isFinite(value) ? value : fail(entity, field)
 }
 
+function nullableNumberValue(record: Record<string, unknown>, field: string, entity: string): number | null {
+  const value = record[field]
+  return value === null || (typeof value === 'number' && Number.isFinite(value)) ? value : fail(entity, field)
+}
+
 function booleanValue(record: Record<string, unknown>, field: string, entity: string): boolean {
   const value = record[field]
   return typeof value === 'boolean' ? value : fail(entity, field)
@@ -89,7 +94,8 @@ export function parseRecurringExpense(value: unknown): RecurringExpense {
   if (frequency !== 'daily' && frequency !== 'weekly' && frequency !== 'monthly') return fail(entity, 'frequency')
   return {
     id: numberValue(value, 'id', entity),
-    source_expense_id: numberValue(value, 'source_expense_id', entity),
+    source_expense_id: nullableNumberValue(value, 'source_expense_id', entity),
+    template_rule_id: nullableNumberValue(value, 'template_rule_id', entity),
     frequency,
     interval_count: numberValue(value, 'interval_count', entity),
     day_of_month: numberValue(value, 'day_of_month', entity),

@@ -2,7 +2,7 @@ import { fetchSupabasePage, jsonResponse, methodNotAllowed, readPagination, type
 import { readRecurringCreate, readRecurringEdit, readRecurringUpdate, validateRecurringRequest } from '../_shared/recurringValidation.ts'
 
 type FunctionContext = { request: Request; env: SupabaseEnv }
-const SELECT = 'id,source_expense_id,frequency,interval_count,day_of_month,start_date,end_date,next_run_date,active,amount,title,category,payer,memo,last_generated_at,created_at,updated_at'
+const SELECT = 'id,source_expense_id,template_rule_id,frequency,interval_count,day_of_month,start_date,end_date,next_run_date,active,amount,title,category,payer,memo,last_generated_at,created_at,updated_at'
 
 async function supabaseRequest(env: SupabaseEnv, path: string, method: 'POST' | 'PATCH', body: unknown, query?: URLSearchParams): Promise<Response> {
   if (!env.SUPABASE_URL?.trim() || !env.SUPABASE_SECRET_KEY?.trim()) return jsonResponse({ error: 'サーバーのDB接続設定が未完了です。' }, 503)
