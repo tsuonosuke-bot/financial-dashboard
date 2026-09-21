@@ -11,11 +11,16 @@ test('Finance uses the shared dashboard shell and requested title', async () => 
   assert.match(html, /<title>Finance — Personal Hub<\/title>/)
   assert.match(app, /<h1>Finance<\/h1>/)
   assert.match(app, /className="dashboard-switcher"/)
+  assert.match(app, /<summary aria-label="ページを切り替える">/)
+  assert.match(app, /className="dashboard-switcher-icon"/)
   assert.match(app, /SUPABASE LIVE/)
   assert.match(app, />Idea<\/a>/)
   assert.match(app, />Knowledge<\/a>/)
   assert.match(css, /width: min\(1240px, calc\(100% - 32px\)\)/)
   assert.match(css, /min-height: 68px/)
+  assert.doesNotMatch(css, /content:\s*"▦"/)
+  assert.match(css, /\.dashboard-switcher summary \{ width: 40px; min-width: 40px; height: 40px; min-height: 40px;/)
+  assert.match(css, /\.recurring-button \{ width: 40px; min-width: 40px; height: 40px; min-height: 40px;/)
 })
 
 test('家計簿の登録メニューを表示し、専用APIへ送信する', async () => {

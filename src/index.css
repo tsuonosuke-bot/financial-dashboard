@@ -229,6 +229,7 @@ select {
 .dashboard-switcher summary { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid #d7dde0; background: #fff; color: #53616a; font-size: 12px; font-weight: 700; list-style: none; cursor: pointer; }
 .dashboard-switcher summary::-webkit-details-marker { display: none; }
 .dashboard-switcher summary::after { content: "⌄"; font-size: 11px; }
+.dashboard-switcher-icon { width: 18px; height: 18px; display: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .dashboard-switcher nav { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: 210px; display: grid; gap: 3px; padding: 8px; border: 1px solid #d7dde0; border-radius: 11px; background: #fff; box-shadow: 0 16px 42px rgba(31, 47, 56, .16); }
 .dashboard-switcher nav a, .dashboard-switcher nav span { display: flex; align-items: center; min-height: 36px; padding: 7px 9px; border-radius: 7px; color: #20262a; font-size: 12px; font-weight: 700; text-decoration: none; }
 .dashboard-switcher nav a:hover { background: #eef4f6; }
@@ -301,19 +302,21 @@ select {
   .dashboard-brand-mark { width: 34px; height: 34px; border-radius: 9px; }
   .dashboard-brand h1 { font-size: 18px; }
   .header-actions { gap: 5px; }
-  .dashboard-switcher summary { width: 38px; justify-content: center; padding: 0; overflow: hidden; font-size: 0; }
-  .dashboard-switcher summary::before { content: "▦"; font-size: 17px; }
+  .dashboard-switcher summary { width: 40px; min-width: 40px; height: 40px; min-height: 40px; justify-content: center; padding: 0; overflow: hidden; }
+  .dashboard-switcher summary > span { display: none; }
+  .dashboard-switcher-icon { display: block; }
   .dashboard-switcher summary::after { display: none; }
   .dashboard-switcher nav { position: fixed; top: 68px; right: 10px; left: 10px; width: auto; }
   .add-button { font-size: 0; }
-  .recurring-button { width: 42px; min-width: 42px; padding: 0; overflow: hidden; border-color: #59449b; border-radius: 11px; background: #59449b; color: #fff; box-shadow: 0 3px 10px rgba(73, 55, 130, .2); }
+  .recurring-button { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; overflow: hidden; border-color: #59449b; border-radius: 8px; background: #59449b; color: #fff; box-shadow: 0 3px 10px rgba(73, 55, 130, .2); }
   .recurring-button:hover:not(:disabled) { border-color: #44317f; background: #44317f; color: #fff; }
   .recurring-button span { display: none; }
   .recurring-icon { width: 21px; height: 21px; }
   .refresh-button { gap: 0; }
-  .add-button { width: 40px; padding: 0; }
+  .add-button { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; }
   .add-button::after { content: "+"; font-size: 20px; }
-  .hub-button, .refresh-button { min-height: 38px; padding-inline: 10px; }
+  .hub-button, .refresh-button { height: 40px; min-height: 40px; padding-inline: 10px; }
+  .refresh-button { width: 40px; min-width: 40px; padding: 0; }
   .app-main { width: calc(100% - 20px); padding-top: 14px; }
   .page-meta { justify-content: space-between; gap: 8px; }
   .dashboard-stack { gap: 12px; }
