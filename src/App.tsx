@@ -18,6 +18,7 @@ import {
 } from './lib/finance'
 import { createRecurringExpense, getRecurringExpenses, runRecurringExpenses, setRecurringExpenseActive, updateRecurringExpense } from './lib/api'
 import type { Expense, ExpenseDraft, RecurringExpense, RecurringExpenseDraft, RecurringExpenseUpdate } from './lib/types'
+import { ThemeSelect } from './components/ThemeSelect'
 
 const MonthlyTrendChart = lazy(() => import('./components/MonthlyTrendChart').then((module) => ({ default: module.MonthlyTrendChart })))
 const CategoryPieChart = lazy(() => import('./components/CategoryPieChart').then((module) => ({ default: module.CategoryPieChart })))
@@ -226,14 +227,17 @@ function App() {
                 </svg>
                 <span>Dashboards</span>
               </summary>
-              <nav aria-label="ダッシュボードを切り替え">
-                <a href="https://personal-dashboard-7md.pages.dev/compass/">Idea</a>
-                <a href="https://personal-dashboard-7md.pages.dev/writing/">Writing</a>
-                <a href="https://personal-dashboard-7md.pages.dev/habits/">Habits</a>
-                <span aria-current="page">Finance</span>
-                <a href="https://personal-dashboard-7md.pages.dev/go/knowledge">Knowledge</a>
-                <a href="https://personal-dashboard-7md.pages.dev/status/">接続状態</a>
-              </nav>
+              <div className="dashboard-switcher-menu">
+                <nav aria-label="ダッシュボードを切り替え">
+                  <a href="https://personal-dashboard-7md.pages.dev/compass/">Idea</a>
+                  <a href="https://personal-dashboard-7md.pages.dev/writing/">Writing</a>
+                  <a href="https://personal-dashboard-7md.pages.dev/habits/">Habits</a>
+                  <span aria-current="page">Finance</span>
+                  <a href="https://personal-dashboard-7md.pages.dev/go/knowledge">Knowledge</a>
+                  <a href="https://personal-dashboard-7md.pages.dev/status/">接続状態</a>
+                </nav>
+                <ThemeSelect />
+              </div>
             </details>
             <span className={`source-badge ${error ? 'error' : loading ? 'loading' : demoMode ? 'demo' : 'live'}`}>
               {error ? '取得失敗' : loading ? '接続確認中' : demoMode ? 'DEMO DATA' : 'SUPABASE LIVE'}

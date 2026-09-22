@@ -10,7 +10,9 @@
     "lint": "oxlint",
     "test": "node --test --test-isolation=none tests/*.test.ts",
     "typecheck": "tsc -b",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "theme": "node scripts/build-dark-theme.mjs src/index.css",
+    "theme:check": "node scripts/build-dark-theme.mjs --check src/index.css"
   },
   "dependencies": {
     "jose": "^6.2.12",

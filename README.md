@@ -146,3 +146,11 @@ Cloudflare PagesのProductionとPreviewの両方へ、上記4つの環境変数�
 4. 本番の件数・最新取引・月別集計をSupabaseと照合する。
 5. `supabase/disable-anon-access.sql` を実行する。
 6. 本番表示を再確認し、旧anon keyからのSELECTが拒否されることを確認する。
+
+## Dark mode
+
+`public/theme.js` (shared with the Hub) sets `<html data-theme>` from the saved
+自動/ライト/ダーク choice or the OS setting. Tailwind utilities follow the
+reversed palette variables at the end of `src/index.css`; plain CSS colors are
+converted by `npm run theme`, which regenerates `src/index.dark.css` (do not
+edit it by hand — `tests/darkTheme.test.ts` fails when it is stale).
