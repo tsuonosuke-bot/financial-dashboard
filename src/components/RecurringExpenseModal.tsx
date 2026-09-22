@@ -12,6 +12,7 @@ type Props = {
   onUpdate: (draft: RecurringExpenseUpdate) => Promise<boolean>
   onToggle: (rule: RecurringExpense) => void
   onRun: () => void
+  onReload: () => void
 }
 
 type EntryType = 'expense' | 'income' | 'offset'
@@ -29,7 +30,7 @@ function entryType(rule: RecurringExpense): EntryType {
   return rule.category.startsWith('80_') ? 'income' : rule.amount < 0 ? 'offset' : 'expense'
 }
 
-export function RecurringExpenseModal({ categories, rules, busy, error, onClose, onCreate, onUpdate, onToggle, onRun }: Props) {
+export function RecurringExpenseModal({ categories, rules, busy, error, onClose, onCreate, onUpdate, onToggle, onRun, onReload }: Props) {
   const [editing, setEditing] = useState<RecurringExpense | null>(null)
   const [editFrequency, setEditFrequency] = useState<RecurringFrequency>('monthly')
   const [editInterval, setEditInterval] = useState(1)
@@ -123,7 +124,7 @@ export function RecurringExpenseModal({ categories, rules, busy, error, onClose,
       <div className="recurring-body">
         <div className="recurring-section-head"><div><h3>登録中のルール</h3><p>毎日0:10（日本時間）にSupabaseで自動反映します。PCの電源は不要です。</p></div><button type="button" className="secondary-button" onClick={onRun} disabled={busy}>今すぐ反映</button></div>
         <div className="recurring-list">
-          {rules.length === 0 && <p className="recurring-empty">まだ定期登録はありません。</p>}
+          {rules.length === 0 && !error && <p className="recurring-empty">まだ定期登録はありません。</p>}
           {rules.map((rule) => <article className="recurring-rule" key={rule.id}>
             <div className="recurring-rule-main"><strong>{rule.title}</strong><span>{frequencyLabels[rule.frequency]}{rule.interval_count > 1 ? `（${rule.interval_count}${rule.frequency === 'monthly' ? 'か月' : rule.frequency === 'weekly' ? '週' : '日'}ごと）` : ''} · 次回 {rule.next_run_date}</span><small>{categoryLabel(rule.category)} · {formatYen(Math.abs(rule.amount))} · 最終生成 {lastRunLabel(rule.last_generated_at)}</small></div>
             <div className="recurring-rule-actions"><button type="button" className="rule-copy" onClick={() => beginCopy(rule)} disabled={busy}>複製</button><button type="button" className="rule-edit" onClick={() => beginEdit(rule)} disabled={busy}>編集</button><button type="button" className={rule.active ? 'rule-active' : 'rule-paused'} onClick={() => onToggle(rule)} disabled={busy}>{rule.active ? '有効' : '停止中'}</button></div>
@@ -165,8 +166,8 @@ export function RecurringExpenseModal({ categories, rules, busy, error, onClose,
           <div className="entry-actions"><button type="button" className="secondary-button" onClick={() => setCopying(null)} disabled={busy}>キャンセル</button><button type="submit" className="primary-button" disabled={busy}>{busy ? '処理中…' : '複製して追加'}</button></div>
         </form>}
 
-        {!editing && !copying && <p className="recurring-empty">新しいルールは、登録中のルールにある「複製」から追加できます。</p>}
-        {error && !editing && !copying && <p className="entry-error" role="alert">{error}</p>}
+        {!editing && !copying && !error && <p className="recurring-empty">新しいルールは、登録中のルールにある「複製」から追加できます。</p>}
+        {error && !editing && !copying && <div className="entry-error recurring-load-error" role="alert"><span>{error}</span><button type="button" onClick={onReload} disabled={busy}>再試行</button></div>}
         {!editing && !copying && <div className="entry-actions"><button type="button" className="secondary-button" onClick={onClose} disabled={busy}>家計簿へ戻る</button></div>}
       </div>
     </section>

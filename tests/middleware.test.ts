@@ -46,7 +46,7 @@ test('Cloudflare Accessモードは設定不足と不正JWTを拒否する', asy
   assert.doesNotMatch(await invalid.text(), /not-a-jwt/)
 })
 
-test('Hubサービスキーは家計簿のGETだけを許可する', async () => {
+test('Hubサービスキーは読み取り専用の家計簿・書き出し・接続状態だけを許可する', async () => {
   const token = 'hub-service-token-that-is-at-least-32-characters'
   const env = { HUB_SERVICE_TOKEN: token, DASHBOARD_PASSWORD: 'password' }
   const allowed = await onRequest({
@@ -56,6 +56,16 @@ test('Hubサービスキーは家計簿のGETだけを許可する', async () =>
   })
   assert.equal(allowed.status, 200)
   assert.equal(await allowed.text(), 'expenses')
+
+  for (const path of ['/api/export', '/api/status']) {
+    const readOnly = await onRequest({
+      request: new Request(`https://dashboard.example${path}`, { headers: { 'X-Hub-Service': token } }),
+      env,
+      next: async () => new Response(path),
+    })
+    assert.equal(readOnly.status, 200)
+    assert.equal(await readOnly.text(), path)
+  }
 
   const denied = await onRequest({
     request: new Request('https://dashboard.example/api/budget-categories', { headers: { 'X-Hub-Service': token } }),

@@ -25,6 +25,11 @@ export function CategoryPieChart({ expenses, selectedMonth }: Props) {
     const other = sorted.slice(7).reduce((sum, item) => sum + item.total, 0)
     return other > 0 ? [...primary, { categoryKey: '__other__', category: 'その他', total: other }] : primary
   }, [expenses, selectedMonth])
+  const total = data.reduce((sum, item) => sum + item.total, 0)
+  const top = data[0]
+  const summary = total === 0 || !top
+    ? `${monthLabel(selectedMonth)}の支出データはありません。`
+    : `${monthLabel(selectedMonth)}の支出は${yen.format(total)}です。最大の区分は「${top.category}」で、全体の${Math.round((top.total / total) * 100)}%です。`
 
   return (
     <section className="panel chart-panel">
@@ -38,30 +43,33 @@ export function CategoryPieChart({ expenses, selectedMonth }: Props) {
       {data.length === 0 ? (
         <div className="grid h-[360px] place-items-center text-sm text-slate-500">この月の支出データはありません</div>
       ) : (
-        <ResponsiveContainer width="100%" height={360}>
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="total"
-              nameKey="category"
-              cx="50%"
-              cy="46%"
-              innerRadius={62}
-              outerRadius={112}
-              paddingAngle={2}
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.categoryKey}
-                  fill={entry.categoryKey === '__other__' ? '#94a3b8' : categoryColor(entry.categoryKey)}
-                />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value) => yen.format(Number(value))} />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-          </PieChart>
-        </ResponsiveContainer>
+        <div role="img" aria-describedby="category-chart-summary">
+          <ResponsiveContainer width="100%" height={360}>
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="total"
+                nameKey="category"
+                cx="50%"
+                cy="46%"
+                innerRadius={62}
+                outerRadius={112}
+                paddingAngle={2}
+              >
+                {data.map((entry) => (
+                  <Cell
+                    key={entry.categoryKey}
+                    fill={entry.categoryKey === '__other__' ? '#94a3b8' : categoryColor(entry.categoryKey)}
+                  />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => yen.format(Number(value))} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       )}
+      <p className="chart-summary" id="category-chart-summary">{summary}</p>
     </section>
   )
 }

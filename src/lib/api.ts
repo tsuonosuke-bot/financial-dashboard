@@ -1,5 +1,6 @@
 import type { BudgetCategory, Expense, ExpenseDraft, ExpenseSnapshot, RecurringExpense, RecurringExpenseDraft, RecurringExpenseUpdate } from './types'
 import { parseBudgetCategory, parseExpense, parsePageEnvelope, parseRecurringExpense } from './apiValidation'
+import { readApiResponse, responseMessage } from './http'
 
 type ErrorBody = { error?: unknown }
 
@@ -10,23 +11,27 @@ function appPath(path: string): string {
 }
 
 async function requestJson(path: string, init: RequestInit = {}): Promise<unknown> {
-  const response = await fetch(appPath(path), {
-    credentials: 'same-origin',
-    method: 'GET',
-    ...init,
-    headers: { Accept: 'application/json', ...init.headers },
-  })
+  let response: Response
+  try {
+    response = await fetch(appPath(path), {
+      credentials: 'same-origin',
+      method: 'GET',
+      ...init,
+      headers: { Accept: 'application/json', ...init.headers },
+    })
+  } catch {
+    throw new Error('ネットワークへ接続できませんでした。通信状態を確認して再試行してください。')
+  }
+  const responseBody = await readApiResponse(response)
   if (!response.ok) {
-    let message = `APIエラー (${response.status})`
-    try {
-      const body = (await response.json()) as ErrorBody
+    let message = responseMessage(response)
+    if (typeof responseBody === 'object' && responseBody !== null) {
+      const body = responseBody as ErrorBody
       if (typeof body.error === 'string') message = body.error
-    } catch {
-      // JSONでないエラーはHTTPステータスを使う。
     }
     throw new Error(message)
   }
-  return response.json() as Promise<unknown>
+  return responseBody
 }
 
 const API_PAGE_SIZE = 1_000

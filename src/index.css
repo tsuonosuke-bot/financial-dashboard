@@ -173,6 +173,9 @@ select {
 .header-actions { display: flex; align-items: center; gap: 7px; }
 .app-main { width: min(1240px, calc(100% - 32px)); margin: 0 auto; padding: 20px 0 52px; }
 .page-meta { display: flex; justify-content: flex-end; gap: 14px; margin-bottom: 12px; color: #6c7780; font-size: 11px; }
+.page-tools { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 9px; }
+.page-tools a { min-height: 34px; display: inline-flex; align-items: center; padding: 6px 10px; border: 1px solid #d9e0e4; border-radius: 8px; background: #fff; color: #315f78; font-size: 11px; font-weight: 750; text-decoration: none; }
+.page-tools a:hover { border-color: #315f78; }
 .dashboard-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .summary-grid { gap: 12px; }
 .filter-intro-title { display: flex; align-items: baseline; gap: 9px; }
@@ -180,6 +183,7 @@ select {
 .filter-controls { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .chart-panel { padding: 16px; }
 .chart-panel .panel-heading { margin-bottom: 9px; }
+.chart-summary { margin: 8px 0 0; padding-top: 9px; border-top: 1px solid #e8edf0; color: #5f6c75; font-size: 11px; line-height: 1.55; }
 .trend-heading-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 7px; }
 .chart-series-toggles { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; }
 .chart-series-toggles button { display: inline-flex; min-height: 27px; align-items: center; gap: 5px; padding: 3px 9px; border: 0; border-radius: 999px; background: transparent; color: #64748b; font-size: 11px; font-weight: 700; cursor: pointer; }
@@ -266,6 +270,8 @@ select {
 .amount-field > span { color: #68747b; }
 .amount-field input { border: 0; box-shadow: none !important; }
 .entry-error { margin: 14px 0 0; padding: 10px 12px; border: 1px solid #efc9c7; border-radius: 8px; background: #fff4f3; color: #a7443e; font-size: 12px; }
+.recurring-load-error { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.recurring-load-error button { min-height: 32px; flex: 0 0 auto; padding: 5px 10px; border: 1px solid #d99c98; border-radius: 7px; background: #fff; color: #913b36; font-weight: 700; cursor: pointer; }
 .entry-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .recurring-modal { width: min(760px, 100%); }
 .recurring-body { padding: 20px 22px; }

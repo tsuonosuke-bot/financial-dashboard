@@ -73,7 +73,8 @@ export const onRequest = async (context: MiddlewareContext): Promise<Response> =
   const requestUrl = new URL(context.request.url)
   const hubToken = context.request.headers.get('X-Hub-Service') || ''
   const expectedHubToken = context.env.HUB_SERVICE_TOKEN?.trim() || ''
-  if (context.request.method === 'GET' && requestUrl.pathname === '/api/expenses'
+  if (context.request.method === 'GET' && (requestUrl.pathname === '/api/expenses'
+    || requestUrl.pathname === '/api/export' || requestUrl.pathname === '/api/status')
     && expectedHubToken.length >= 32 && safeEqual(hubToken, expectedHubToken)) {
     return withPrivacyHeaders(await context.next())
   }

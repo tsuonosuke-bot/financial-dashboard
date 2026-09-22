@@ -35,7 +35,7 @@ npm run dev
 | `AUTH_MODE` | 任意 | `basic`（既定）または `access` |
 | `TEAM_DOMAIN` | Access時 | `https://<team>.cloudflareaccess.com` |
 | `POLICY_AUD` | Access時 | Access Application Audience tag |
-| `HUB_SERVICE_TOKEN` | Hub連携時 | Hubから家計簿GET APIだけを許可する共有secret |
+| `HUB_SERVICE_TOKEN` | Hub連携時 | Hubから家計簿・書き出し・接続状態のGETだけを許可する共有secret |
 | `SSO_SHARED_SECRET` | Hub連携時 | Hubからの署名付き認証引き継ぎを検証する共有secret |
 | `SESSION_TTL_DAYS` | 任意 | 引き継いだセッションの日数。既定30 |
 | `SUPABASE_URL` | 必須 | `knowledge-db` のプロジェクトURL |
@@ -64,10 +64,14 @@ npm run preview   # ビルド成果物のプレビュー
 - 選択月のカテゴリ別支出内訳
 - 選択月の収支明細（検索・期間・収支種別・金額範囲・並び順フィルター）
 - 支出・収入・支出相殺の新規登録
+- Hubの「＋」から `?new=expense` で登録画面を直接開く
 - 既存明細の編集（他画面で変更されたレコードは競合として停止）
 - 既存の定期登録ルールをテンプレートとして複製・編集できる、日次・週次・月次の定期登録ルール管理
 - Supabase Cronによる毎日0:10（JST）の自動生成と、画面からの手動反映
 - `budget_categories` をカテゴリマスターとして使用
+- Excel等で開けるUTF-8 CSVの読み取り専用書き出し
+- グラフごとの合計・最大区分・前月比較を短い文章でも表示
+- HTMLや壊れたJSONなど想定外のAPI応答を、内部解析エラーではなく利用者向けの案内へ変換
 
 `80_収入` カテゴリの行は収入として扱います。それ以外のカテゴリでは、正の金額を支出、負の金額を同じカテゴリの支出に対する相殺として集計します。
 
@@ -85,9 +89,12 @@ Supabaseプロジェクト `plwlxwidpqbunugfxjhp` の次のテーブルを参照
 - `PATCH /api/expenses`
 - `GET /api/budget-categories`
 - `GET / POST / PATCH /api/recurring-expenses`
+- `GET /api/export` — 全明細をCSVで書き出す。Hubの全体スナップショットは `?format=json` を使用
+- `GET /api/status` — 認証方式、DB接続先、適用migration、最終成功時刻だけを返す
 
 定期登録を使う前、および定期登録の仕様更新後は、Supabase SQL Editorで `supabase/recurring-expenses.sql` を実行します。
 生成履歴には `(ルール, 予定日)` の一意制約があり、Cronと手動反映が重なっても同じ明細は二重登録されません。
+共通の接続状態画面を有効にする場合は、公開より先に `supabase/migrations/202609220001_connection_status.sql` を適用します。
 
 APIは取得列、並び順、対象テーブル、1回あたり最大1,000件をサーバー側で固定しています。
 登録・編集時は同一オリジン・専用ヘッダー・JSON形式・日付・金額・文字数・許可項目を検証します。収入は金額を負数へ正規化して保存します。編集時は編集前の値も照合し、別画面で変更済みの場合は409を返して上書きを止めます。
@@ -104,7 +111,7 @@ iframe埋め込み、検索エンジン登録を禁止します。
 `AUTH_MODE=access` では `Cf-Access-Jwt-Assertion` の署名・issuer・audienceを検証します。
 Personal Hubと他のダッシュボードを同じAccess applicationに登録すると、1回のログインで移動できます。
 
-`AUTH_MODE=basic` では、Personal Hubと同じ `SSO_SHARED_SECRET` を設定すると署名付き引き継ぎを受け付け、対象ホストに固定したHttpOnlyセッションを作成します。`HUB_SERVICE_TOKEN` は `GET /api/expenses` のみに使え、他のAPIやメソッドはBasic認証を要求します。
+`AUTH_MODE=basic` では、Personal Hubと同じ `SSO_SHARED_SECRET` を設定すると署名付き引き継ぎを受け付け、対象ホストに固定したHttpOnlyセッションを作成します。`HUB_SERVICE_TOKEN` は `GET /api/expenses`、`GET /api/export`、`GET /api/status` のみに使え、他のAPIやメソッドはBasic認証を要求します。
 
 FunctionsだけがSupabase Secret keyを保持し、ブラウザへは必要な列だけを返します。
 受信データも画面側で型・必須値・ページ情報を検証します。

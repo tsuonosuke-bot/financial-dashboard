@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { CategoryFilter } from './components/CategoryFilter'
 import { ExpenseFormModal } from './components/ExpenseFormModal'
 import { ExpenseTable } from './components/ExpenseTable'
@@ -36,11 +36,25 @@ function App() {
   const [recurringRules, setRecurringRules] = useState<RecurringExpense[]>([])
   const [recurringBusy, setRecurringBusy] = useState(false)
   const [recurringError, setRecurringError] = useState<string | null>(null)
+  const [recurringLoadError, setRecurringLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadRecurringRules = useCallback(async () => {
     if (demoMode) return
-    void getRecurringExpenses().then(setRecurringRules).catch(() => { /* migration前は通常画面を妨げない */ })
+    try {
+      const rules = await getRecurringExpenses()
+      setRecurringRules(rules)
+      setRecurringLoadError(null)
+      setRecurringError(null)
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : '定期登録を読み込めませんでした。'
+      setRecurringLoadError(message)
+      setRecurringError(message)
+    }
   }, [demoMode])
+
+  // Initial server data must be synchronized after mount; the async loader also backs the visible retry action.
+  // oxlint-disable-next-line react/set-state-in-effect
+  useEffect(() => { void loadRecurringRules() }, [loadRecurringRules])
   useEffect(() => {
     const syncView = () => setRecurringOpen(new URLSearchParams(window.location.search).get('view') === 'recurring')
     window.addEventListener('popstate', syncView)
@@ -162,7 +176,7 @@ function App() {
   }
 
   const openRecurring = () => {
-    setRecurringError(null)
+    setRecurringError(recurringLoadError)
     setRecurringOpen(true)
     const url = new URL(window.location.href)
     url.searchParams.set('view', 'recurring')
@@ -182,6 +196,7 @@ function App() {
     try {
       const generated = await runRecurringExpenses()
       setRecurringRules(await getRecurringExpenses())
+      setRecurringLoadError(null)
       reload()
       setNotice(generated > 0 ? `${generated}件の定期明細を登録しました。` : '登録が必要な定期明細はありませんでした。')
     } catch (caught) { setRecurringError(caught instanceof Error ? caught.message : '定期登録を実行できませんでした。') }
@@ -217,6 +232,7 @@ function App() {
                 <a href="https://personal-dashboard-7md.pages.dev/habits/">Habits</a>
                 <span aria-current="page">Finance</span>
                 <a href="https://personal-dashboard-7md.pages.dev/go/knowledge">Knowledge</a>
+                <a href="https://personal-dashboard-7md.pages.dev/status/">接続状態</a>
               </nav>
             </details>
             <span className={`source-badge ${error ? 'error' : loading ? 'loading' : demoMode ? 'demo' : 'live'}`}>
@@ -240,6 +256,10 @@ function App() {
       </header>
 
       <main className="app-main">
+        <div className="page-tools" aria-label="データ管理">
+          <a href="api/export">CSV書き出し</a>
+          <a href="https://personal-dashboard-7md.pages.dev/status/">接続状態</a>
+        </div>
         {!loading && !error && (
           <div className="page-meta" aria-label="Financeデータの概要">
             <span>{demoMode ? 'デモデータ' : `${expenses.length.toLocaleString('ja-JP')}件`} · {categories.length}カテゴリ</span>
@@ -420,6 +440,7 @@ function App() {
           onUpdate={editRecurring}
           onToggle={(rule) => void toggleRecurring(rule)}
           onRun={() => void runRecurring()}
+          onReload={() => void loadRecurringRules()}
         />
       )}
     </div>

@@ -50,6 +50,20 @@ export function MonthlyTrendChart({ expenses, selectedMonth }: Props) {
     () => buildMonthlyTrendData(expenses, selectedMonth),
     [expenses, selectedMonth],
   )
+  const current = data.at(-1)
+  const previous = data.at(-2)
+  const spending = (row: typeof current) => row
+    ? categories.reduce((sum, category) => sum + Number(row[category] ?? 0), 0)
+    : 0
+  const currentSpending = spending(current)
+  const previousSpending = spending(previous)
+  const spendingChange = currentSpending - previousSpending
+  const changeText = spendingChange === 0
+    ? '前月と同額です'
+    : `前月より${yen.format(Math.abs(spendingChange))}${spendingChange > 0 ? '増えています' : '減っています'}`
+  const summary = !current || (currentSpending === 0 && Number(current.income) === 0)
+    ? `${monthLabel(selectedMonth)}には比較できる収支データがありません。`
+    : `${monthLabel(selectedMonth)}は支出${yen.format(currentSpending)}、収入${yen.format(Number(current.income))}、収支${yen.format(Number(current.balance))}です。支出は${changeText}。`
 
   return (
     <section className="panel chart-panel">
@@ -92,8 +106,9 @@ export function MonthlyTrendChart({ expenses, selectedMonth }: Props) {
         {!showBars && !showBalance && <span className="trend-legend-empty">表示するグラフを選択してください</span>}
       </div>
       {showBars || showBalance ? (
-        <ResponsiveContainer width="100%" height={360}>
-          <ComposedChart data={data} barCategoryGap="18%" margin={{ top: 16, right: 8, left: 4, bottom: 0 }}>
+        <div role="img" aria-describedby="monthly-trend-summary">
+          <ResponsiveContainer width="100%" height={360}>
+            <ComposedChart data={data} barCategoryGap="18%" margin={{ top: 16, right: 8, left: 4, bottom: 0 }}>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 12 }} />
             <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}k`} tick={{ fontSize: 12 }} />
@@ -111,11 +126,13 @@ export function MonthlyTrendChart({ expenses, selectedMonth }: Props) {
             ))}
             {showBars && <Bar dataKey="income" name="収入" fill="#38bdf8" maxBarSize={34} radius={[4, 4, 0, 0]} />}
             {showBalance && <Line type="monotone" dataKey="balance" name="収支" stroke="#059669" strokeWidth={2} dot={false} />}
-          </ComposedChart>
-        </ResponsiveContainer>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       ) : (
         <div className="trend-chart-empty">グラフ表示がオフです</div>
       )}
+      <p className="chart-summary" id="monthly-trend-summary">{summary}</p>
     </section>
   )
 }
