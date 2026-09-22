@@ -3,8 +3,14 @@ import { parseBudgetCategory, parseExpense, parsePageEnvelope, parseRecurringExp
 
 type ErrorBody = { error?: unknown }
 
+function appPath(path: string): string {
+  if (typeof window === 'undefined') return path
+  const basePath = new URL(import.meta.env.BASE_URL, window.location.href).pathname.replace(/\/$/, '')
+  return `${basePath}${path}`
+}
+
 async function requestJson(path: string, init: RequestInit = {}): Promise<unknown> {
-  const response = await fetch(path, {
+  const response = await fetch(appPath(path), {
     credentials: 'same-origin',
     method: 'GET',
     ...init,
