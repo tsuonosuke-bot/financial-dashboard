@@ -18,3 +18,9 @@ test('theme resolves before styles load and the switcher sits in the dashboard m
   assert.match(main, /import '\.\/index\.css'\nimport '\.\/index\.dark\.css'/)
   assert.match(app, /<ThemeSelect \/>/)
 })
+
+test('theme script pins the browser color scheme to the resolved theme', async () => {
+  const script = await readFile(new URL('../public/theme.js', import.meta.url), 'utf8')
+  assert.match(script, /root\.style\.colorScheme = theme;/)
+  assert.match(script, /if \(scheme\) scheme\.content = theme;/)
+})
