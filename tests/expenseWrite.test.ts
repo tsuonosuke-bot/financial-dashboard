@@ -136,7 +136,7 @@ test('編集前の値を条件にして家計簿を1件更新する', async () =
     assert.equal(response.status, 200)
     assert.equal(seenInit?.method, 'PATCH')
     assert.match(seenUrl, /id=eq\.7/)
-    assert.equal(new URL(seenUrl).searchParams.get('title'), 'eq."ランチ, A店"')
+    assert.equal(new URL(seenUrl).searchParams.get('title'), 'eq.ランチ, A店')
     assert.match(seenUrl, /memo=is\.null/)
     assert.deepEqual(JSON.parse(String(seenInit?.body)), {
       transaction_date: '2026-09-15', amount: 1500, title: '夕食', category: '01_食費', payer: '本人', memo: null,

@@ -83,7 +83,8 @@ export async function insertSupabaseRow(
 }
 
 export function supabaseEq(value: string): string {
-  return `eq."${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+  // PostgRESTの単純な演算子は値を引用符で囲まない。囲むと引用符ごと比較され一致しなくなる。
+  return `eq.${value}`
 }
 
 export async function updateSupabaseRow(
